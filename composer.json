@@ -1,0 +1,64 @@
+{
+    "name": "darkghosthunter/captchavel",
+    "description": "Easily integrate Google Recaptcha v3 into your Laravel application",
+    "keywords": [
+        "darkghosthunter",
+        "captchavel",
+        "laravel",
+        "recaptcha",
+        "google"
+    ],
+    "homepage": "https://github.com/darkghosthunter/captchavel",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Italo Baeza Cabrera",
+            "email": "darkghosthunter@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^7.1",
+        "google/recaptcha": "^1.2",
+        "illuminate/routing": "5.8.*",
+        "illuminate/view": "5.8.*",
+        "illuminate/config": "5.8.*",
+        "illuminate/container": "5.8.*",
+        "illuminate/http": "5.8.*",
+        "illuminate/validation": "5.8.*",
+        "illuminate/support": "5.8.*"
+    },
+    "require-dev": {
+        "orchestra/testbench": "3.8.*",
+        "phpunit/phpunit": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DarkGhostHunter\\Captchavel\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DarkGhostHunter\\Captchavel\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "DarkGhostHunter\\Captchavel\\CaptchavelServiceProvider"
+            ],
+            "aliases": {
+                "ReCaptcha": "DarkGhostHunter\\Captchavel\\ReCaptcha"
+            }
+        }
+    }
+}
