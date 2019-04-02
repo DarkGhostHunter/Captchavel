@@ -1,7 +1,7 @@
 <script src="https://www.google.com/recaptcha/api.js?render={{ $key }}&onload=captchavelCallback" defer></script>
 <script>
     // Start Captchavel Script
-    const captchavelCallback = function () {
+    var captchavelCallback = () => {
         let site_key = "{{ $key }}";
 
         if (site_key === '') {
