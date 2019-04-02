@@ -1,6 +1,6 @@
 <?php
 
-namespace Captchavel\Http\Middleware;
+namespace DarkGhostHunter\Captchavel\Http\Middleware;
 
 use Closure;
 use DarkGhostHunter\Captchavel\Exceptions\FailedRecaptchaException;
@@ -68,33 +68,16 @@ class CheckRecaptcha
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
      * @param  float  $threshold
-     * @param  bool  $shouldBack
      * @return mixed
      * @throws \Throwable
      */
-    public function handle($request, Closure $next, float $threshold = null, bool $shouldBack = false)
+    public function handle($request, Closure $next, float $threshold = null)
     {
-        $threshold = $threshold ?? $this->config['threshold'];
-
-        throw_unless($this->isPostMethod($request), InvalidCaptchavelMiddlewareMethod::class);
-
-        abort_unless($this->hasValidRequest($request) && $this->hasValidReCaptcha($request, $threshold), 500);
-
-        if ($shouldBack || $this->shouldBackOnLowScore()) {
-            return back()->withInput();
-        }
+        $this->isPostMethod($request);
+        $this->hasValidRequest($request);
+        $this->hasValidReCaptcha($request, $threshold ?? $this->config['threshold']);
 
         return $next($request);
-    }
-
-    /**
-     * Detect if the Robot should return back with the input
-     *
-     * @return bool
-     */
-    protected function shouldBackOnLowScore()
-    {
-        return $this->config['return_on_robot'] ? $this->response->isRobot() : false;
     }
 
     /**
@@ -102,22 +85,11 @@ class CheckRecaptcha
      *
      * @param  \Illuminate\Http\Request  $request
      * @return bool
+     * @throws \Throwable
      */
     protected function isPostMethod(Request $request)
     {
-        return $request->getRealMethod() === 'POST';
-    }
-
-    /**
-     * Detect if the Request accepts HTML and is not an AJAX/PJAX Request
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Illuminate\Http\Response | \Illuminate\Http\JsonResponse  $response
-     * @return bool
-     */
-    protected function isHtml(Request $request, $response)
-    {
-        return $response instanceof Response && $request->acceptsHtml() && !$request->ajax() && !$request->pjax();
+        return throw_unless($request->getRealMethod() === 'POST', InvalidCaptchavelMiddlewareMethod::class);
     }
 
     /**
@@ -146,13 +118,9 @@ class CheckRecaptcha
      */
     protected function hasValidReCaptcha(Request $request, float $threshold)
     {
-        $holder = $this->resolve($request, $threshold);
+        $response = $this->resolve($request, $threshold)->response();
 
-        return throw_unless(
-            $holder->response()->isSuccess(),
-            FailedRecaptchaException::class,
-            $holder->response()->getErrorCodes()
-        );
+        return throw_unless($response->isSuccess(), FailedRecaptchaException::class, $response->getErrorCodes());
     }
 
     /**
@@ -164,23 +132,11 @@ class CheckRecaptcha
      */
     protected function resolve(Request $request, float $threshold)
     {
-        /** @var \DarkGhostHunter\Captchavel\RecaptchaResponseHolder $recaptcha */
-        $recaptcha = app('recaptcha');
-
-        if (!$recaptcha->isResolved()) {
-
-            if ($timeout = $this->config['captchavel.timeout']) {
-                $this->recaptchaFactory->setChallengeTimeout($timeout);
-            }
-
-            return $recaptcha->setResponse(
-                $this->recaptchaFactory
-                    ->setExpectedAction($request->getRequestUri())
-                    ->setScoreThreshold($threshold ?? $this->config['threshold'])
-                    ->verify($request->input('_recaptcha', $request->getClientIp()))
-            );
-        }
-
-        return $recaptcha;
+        return app('recaptcha')->setResponse(
+            $this->recaptchaFactory
+                ->setExpectedAction($request->getRequestUri())
+                ->setScoreThreshold($threshold)
+                ->verify($request->input('_recaptcha'), $request->getClientIp())
+        );
     }
 }

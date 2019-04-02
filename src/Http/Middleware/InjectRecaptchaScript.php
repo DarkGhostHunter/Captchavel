@@ -1,6 +1,6 @@
 <?php
 
-namespace Captchavel\Http\Middleware;
+namespace DarkGhostHunter\Captchavel\Http\Middleware;
 
 use Closure;
 use Illuminate\Contracts\Config\Repository as Config;
@@ -69,17 +69,6 @@ class InjectRecaptchaScript
     }
 
     /**
-     * Detect if the Response has a form with reCAPTCHA data attribute
-     *
-     * @param  \Illuminate\Http\Response  $response
-     * @return bool|int
-     */
-    protected function hasForm(Response $response)
-    {
-        return strpos('data-recaptcha="true"', $response->getContent());
-    }
-
-    /**
      * Injects the front-end Scripts
      *
      * @param  \Illuminate\Http\Response  $response
@@ -95,13 +84,6 @@ class InjectRecaptchaScript
         };
 
         $script = $this->view->make('captchavel::script', ['key' => $this->key])->render();
-
-        // Now we will check if the response has a Form with a data attribute.
-        // If it has it, we will inject the script that allows the reCAPTCHA
-        // input to be rendered, and then passed down to the application.
-        if ($this->hasForm($response)) {
-            $script .= $this->view->make('captchavel::head-script', ['key' => $this->key])->render();
-        }
 
         return $response->setContent(
             substr_replace($content, $script, $endHeadPosition, 0)

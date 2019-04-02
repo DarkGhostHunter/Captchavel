@@ -9,6 +9,8 @@ env:
   matrix:
     - COMPOSER_FLAGS="--prefer-lowest"
     - COMPOSER_FLAGS=""
+  global:
+    - CC_TEST_REPORTER_ID=3cb0149c1ae23214062407321730aa13a558d9e10aa7011e01282b5a46e7f100
 
 before_script:
   - travis_retry composer self-update

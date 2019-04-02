@@ -1,6 +1,6 @@
 <?php
 
-namespace DarkGhostHunter\Captchavel;
+namespace DarkGhostHunter\Captchavel\Facades;
 
 use Illuminate\Support\Facades\Facade;
 

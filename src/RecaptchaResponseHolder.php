@@ -109,7 +109,7 @@ class RecaptchaResponseHolder
      *
      * @return \Illuminate\Support\Carbon
      */
-    public function getSince()
+    public function since()
     {
         return $this->since ?? $this->since = Carbon::parse($this->response->getChallengeTs());
     }
