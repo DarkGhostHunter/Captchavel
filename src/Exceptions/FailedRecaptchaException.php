@@ -3,7 +3,6 @@
 namespace DarkGhostHunter\Captchavel\Exceptions;
 
 use Exception;
-use Throwable;
 
 class FailedRecaptchaException extends Exception
 {

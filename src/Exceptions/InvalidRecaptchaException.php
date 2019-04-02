@@ -6,5 +6,5 @@ use Exception;
 
 class InvalidRecaptchaException extends Exception
 {
-    // ...
+    protected $message = 'The reCAPTCHA token received is invalid';
 }
