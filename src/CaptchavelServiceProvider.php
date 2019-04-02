@@ -4,7 +4,7 @@ namespace DarkGhostHunter\Captchavel;
 
 use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
 use DarkGhostHunter\Captchavel\Http\Middleware\InjectRecaptchaScript;
-use Closure;
+use DarkGhostHunter\Captchavel\Http\Middleware\TransparentRecaptcha;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\ServiceProvider;
 use ReCaptcha\ReCaptcha;
@@ -116,7 +116,7 @@ class CaptchavelServiceProvider extends ServiceProvider
      */
     protected function registerTransparentMiddleware(\Illuminate\Routing\Router $router)
     {
-        $router->aliasMiddleware('recaptcha', function ($request, Closure $next) { return $next($request); });
+        $router->aliasMiddleware('recaptcha', TransparentRecaptcha::class);
     }
 
 }

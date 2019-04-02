@@ -10,7 +10,6 @@ use DarkGhostHunter\Captchavel\RecaptchaResponseHolder as RecaptchaResponse;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Validation\Factory as Validator;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use ReCaptcha\ReCaptcha as ResponseFactory;
 
 class CheckRecaptcha
@@ -105,7 +104,7 @@ class CheckRecaptcha
             '_recaptcha' => 'required|string|size:356',
         ])->fails();
 
-        return throw_unless($isValid, InvalidRecaptchaException::class);
+        return throw_unless($isValid, InvalidRecaptchaException::class, $request->only('_recaptcha'));
     }
 
     /**
@@ -134,9 +133,20 @@ class CheckRecaptcha
     {
         return app('recaptcha')->setResponse(
             $this->recaptchaFactory
-                ->setExpectedAction(preg_replace('/[^A-z\/\_]/s', '', $request->getRequestUri()))
+                ->setExpectedAction($this->sanitizeAction($request->getRequestUri()))
                 ->setScoreThreshold($threshold)
                 ->verify($request->input('_recaptcha'), $request->getClientIp())
         );
+    }
+
+    /**
+     * Sanitizes the Action string to be sent to Google reCAPTCHA servers
+     *
+     * @param  string  $action
+     * @return string|string[]|null
+     */
+    protected function sanitizeAction(string $action)
+    {
+        return preg_replace('/[^A-z\/\_]/s', '', $action);
     }
 }

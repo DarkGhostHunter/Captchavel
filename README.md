@@ -157,9 +157,34 @@ The class has handy methods you can use to check the status of the reCAPTCHA inf
 * `isRobot()`: Detects if the Request has been made by a Robot (below threshold).
 * `since()`: Returns the time the reCAPTCHA challenge was resolved as a Carbon timestamp.
 
-## On Production Environments
+## Local development and robot requests 
 
-The package won't be enabled unless your site is on `production` environment. If you want to enable this on `local` environment to test locally, you can set the `CAPTCHAVEL_LOCAL=true`.
+When developing, this package registers a transparent middleware that allows you to work on your application without contacting reCAPTCHA servers ever. Instead, it will always generate a successful "dummy" response with a `1.0` score.
+
+You can override the score to an absolute `0.0` with:
+
+* appending the `is_robot` to the Request query,
+
+```http request
+POST http://myapp.com/login?is_robot
+```
+
+* or adding a checkbox with the name `is_robot` checked.
+
+```html
+<form action="http://myapp.com/login" method="post" data-recaptcha="true">
+    <!-- ... -->
+    
+    <input id="is_robot" type="checkbox" name="is_robot" checked>
+    <label for="is_robot">Filled by a robot</label>
+    
+    <button type="submit">Login</button>
+</form>
+```
+
+If you want to connect to the reCAPTCHA servers on `local` environment, you can set the `CAPTCHAVEL_LOCAL=true` in your `.env` file.
+
+> The transparent middleware also registers itself on testing environment, so you can test your application using requests made by a robot and made by a human, and an empty `_recaptcha` input.
 
 ## Configuration
 

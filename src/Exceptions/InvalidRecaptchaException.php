@@ -9,12 +9,12 @@ class InvalidRecaptchaException extends Exception
 {
     protected $message = 'The reCAPTCHA token is empty';
 
-    public function __construct($message = "", $code = 0, Throwable $previous = null)
+    public function __construct($token = null, $code = 0, Throwable $previous = null)
     {
-        if (request()->input('_recaptcha') !== null) {
+        if ($token !== null) {
             $this->message = 'The reCAPTCHA token received is invalid';
         }
 
-        parent::__construct($message, $code, $previous);
+        parent::__construct($this->message, $code, $previous);
     }
 }

@@ -2,9 +2,10 @@
 
 namespace DarkGhostHunter\Captchavel\Tests;
 
+use DarkGhostHunter\Captchavel\CaptchavelServiceProvider;
 use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
 use DarkGhostHunter\Captchavel\Http\Middleware\InjectRecaptchaScript;
-use DarkGhostHunter\Captchavel\CaptchavelServiceProvider;
+use DarkGhostHunter\Captchavel\Http\Middleware\TransparentRecaptcha;
 use DarkGhostHunter\Captchavel\RecaptchaResponseHolder;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Str;
@@ -82,12 +83,10 @@ class ServiceProviderTest extends TestCase
 
     public function testDoesntRegisterMiddlewareOnTesting()
     {
-        // We are on testing ROFL
-
         $this->assertFalse($this->app->make(Kernel::class)->hasMiddleware(CheckRecaptcha::class));
         $middleware = $this->app->make('router')->getMiddleware();
 
-        $this->assertInstanceOf(\Closure::class, $middleware['recaptcha']);
+        $this->assertEquals(TransparentRecaptcha::class, $middleware['recaptcha']);
     }
 
     public function testRegisterTransparentMiddlewareOnNotProduction()
@@ -101,7 +100,7 @@ class ServiceProviderTest extends TestCase
 
         $middleware = $this->app->make('router')->getMiddleware();
 
-        $this->assertInstanceOf(\Closure::class, $middleware['recaptcha']);
+        $this->assertEquals(TransparentRecaptcha::class, $middleware['recaptcha']);
     }
 
     public function testRegisterInjectMiddlewareOnAuto()
