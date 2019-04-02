@@ -134,7 +134,7 @@ class CheckRecaptcha
     {
         return app('recaptcha')->setResponse(
             $this->recaptchaFactory
-                ->setExpectedAction($request->getRequestUri())
+                ->setExpectedAction(preg_replace('/[^A-z\/\_]/s', '', $request->getRequestUri()))
                 ->setScoreThreshold($threshold)
                 ->verify($request->input('_recaptcha'), $request->getClientIp())
         );

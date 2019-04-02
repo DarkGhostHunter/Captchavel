@@ -53,7 +53,7 @@ class CheckRecaptchaTest extends TestCase
         $mockRequester->shouldReceive('submit')->andReturn(json_encode([
             'success' => true,
             'score' => 0.8,
-            'action' => '/test-post',
+            'action' => '/testpost',
             'challenge_ts' => Carbon::now()->toIso8601ZuluString(),
         ]));
 
@@ -98,7 +98,7 @@ class CheckRecaptchaTest extends TestCase
         $mockRequester->shouldReceive('submit')->andReturn(json_encode([
             'success' => false,
             'score' => 0.8,
-            'action' => '/test-post',
+            'action' => '/testpost',
             'challenge_ts' => Carbon::now()->toIso8601ZuluString(),
         ]));
 

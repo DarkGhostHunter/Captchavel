@@ -1,7 +1,7 @@
 <script src="https://www.google.com/recaptcha/api.js?render={{ $key }}&onload=captchavelCallback" defer></script>
 <script>
     // Start Captchavel Script
-    var captchavelCallback = () => {
+    window.captchavelCallback = () => {
         let site_key = "{{ $key }}";
 
         if (site_key === '') {
@@ -12,14 +12,16 @@
         Array.from(document.getElementsByTagName('form'))
             .filter((form) => form.dataset.recaptcha === 'true')
             .forEach((form) => {
-                grecaptcha.execute(site_key, { action: form.action }).then((token) => {
+                grecaptcha.execute(site_key, {
+                    action: (form.action.includes('://')
+                        ? (new URL(form.action)).pathname
+                        : form.action).replace(/[^A-z\/\_]/gi, '')
+                }).then((token) => {
                     if (token) {
                         let child = document.createElement('input');
-
                         child.setAttribute('type', 'hidden');
                         child.setAttribute('name', '_recaptcha');
                         child.setAttribute('value', token);
-
                         form.appendChild(child);
                     }
                 });
