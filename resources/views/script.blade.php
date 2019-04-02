@@ -2,10 +2,17 @@
 <script>
     // Start Captchavel Script
     let onloadCallback = function () {
+        let site_key = "{{ key }}";
+
+        if (site_key === '') {
+            console.error("You haven't set your Site Key for reCAPTCHA v3. Get it on https://g.co/recaptcha/admin.");
+            return;
+        }
+
         Array.from(document.getElementsByTagName('form'))
-            .filter((element) => element.dataset.recaptcha === 'true')
-            .forEach(function (element) {
-                grecaptcha.execute({{ $key }}, { action: element.action }).then((token) => {
+            .filter((form) => form.dataset.recaptcha === 'true')
+            .forEach((form) => {
+                grecaptcha.execute(site_key, { action: form.action }).then((token) => {
                     if (token) {
                         let child = document.createElement('input');
 
@@ -13,7 +20,7 @@
                         child.setAttribute('name', '_recaptcha');
                         child.setAttribute('value', token);
 
-                        element.appendChild(child);
+                        form.appendChild(child);
                     }
                 });
             });
