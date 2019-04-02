@@ -12,9 +12,11 @@
         Array.from(document.getElementsByTagName('form'))
             .filter((form) => form.dataset.recaptcha === 'true')
             .forEach((form) => {
+                let action = form.action.includes('://') ? (new URL(form.action)).pathname : form.action;
                 grecaptcha.execute(site_key, {
-                    action: (form.action.includes('://') ? (new URL(form.action)).pathname : form.action)
-                            .replace(/[^A-z\/\_]/gi, '')
+                    action: action
+                            .substring(action.indexOf('?'), action.length)
+                            .replace(/[^A-z\/_]/gi, '')
                 }).then((token) => {
                     if (token) {
                         let child = document.createElement('input');
