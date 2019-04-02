@@ -13,9 +13,8 @@
             .filter((form) => form.dataset.recaptcha === 'true')
             .forEach((form) => {
                 grecaptcha.execute(site_key, {
-                    action: (form.action.includes('://')
-                        ? (new URL(form.action)).pathname
-                        : form.action).replace(/[^A-z\/\_]/gi, '')
+                    action: (form.action.includes('://') ? (new URL(form.action)).pathname : form.action)
+                            .replace(/[^A-z\/\_]/gi, '')
                 }).then((token) => {
                     if (token) {
                         let child = document.createElement('input');
