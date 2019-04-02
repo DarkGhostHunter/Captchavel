@@ -77,6 +77,7 @@ class ServiceProviderTest extends TestCase
 
         $this->assertArrayHasKey('recaptcha', $middleware);
         $this->assertEquals($middleware['recaptcha'], CheckRecaptcha::class);
+        $this->assertEquals($middleware['recaptcha-inject'], InjectRecaptchaScript::class);
     }
 
     public function testDoesntRegisterMiddlewareOnTesting()

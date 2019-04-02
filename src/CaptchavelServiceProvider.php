@@ -102,6 +102,7 @@ class CaptchavelServiceProvider extends ServiceProvider
     protected function registerMiddleware(\Illuminate\Routing\Router $router)
     {
         $router->aliasMiddleware('recaptcha', CheckRecaptcha::class);
+        $router->aliasMiddleware('recaptcha-inject', InjectRecaptchaScript::class);
 
         if ($this->app->make('config')->get('captchavel.mode') === 'auto') {
             $this->app->make(Kernel::class)->pushMiddleware(InjectRecaptchaScript::class);

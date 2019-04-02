@@ -209,11 +209,14 @@ Captchavel will inject the Google reCAPTCHA v3 as a deferred script in the head 
 
 #### `manual`
 
-This will disable the global middleware that injects the Google reCAPTCHA script in your frontend. You have total liberty on how to include the reCAPTCHA script and how to enable the reCAPTCHA check. 
+This will disable the global middleware that injects the Google reCAPTCHA script in your frontend. You should check out the [Google reCAPTCHA documentation](https://developers.google.com/recaptcha/docs/v3) on how to implement it yourself.
 
-Since Captchavel won't include anything in your views, you should check out the [Google reCAPTCHA documentation](https://developers.google.com/recaptcha/docs/v3) on how to implement it yourself.
+Since the frontend will be free, it gives you freedom to:
 
-You can even include the `recaptcha::script` blade template in your layout. Check the [editing the script view](#editing-the-script-view) section.
+* manually include the `recaptcha-inject` middleware only in the routes you want,
+* or include the `recaptcha::script` blade template in your layouts you want. 
+
+Take a look in the [editing the script view](#editing-the-script-view) section.
 
 > The manual mode is very handy if your responses have a lot of data and want better performance, because the middleware won't look into the responses.
 
