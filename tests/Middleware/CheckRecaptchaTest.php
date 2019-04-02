@@ -6,13 +6,11 @@ use DarkGhostHunter\Captchavel\Exceptions\FailedRecaptchaException;
 use DarkGhostHunter\Captchavel\Exceptions\InvalidCaptchavelMiddlewareMethod;
 use DarkGhostHunter\Captchavel\Exceptions\InvalidRecaptchaException;
 use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
-use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Orchestra\Testbench\TestCase;
 use ReCaptcha\ReCaptcha;
 use ReCaptcha\RequestMethod;
-use ReCaptcha\RequestParameters;
 use ReCaptcha\Response;
 
 class CheckRecaptchaTest extends TestCase

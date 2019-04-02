@@ -36,6 +36,9 @@
         "ext-json": "*"
     },
     "autoload": {
+        "files": [
+            "src/helpers.php"
+        ],
         "psr-4": {
             "DarkGhostHunter\\Captchavel\\": "src"
         }

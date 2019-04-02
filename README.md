@@ -103,7 +103,9 @@ Route::post('form')->uses('CustomController@form')->middleware('recaptcha');
 
 ### Accessing the reCAPTCHA response
 
-You can access the reCAPTCHA response using the `ReCaptcha` facade, which will return the reCAPTCHA Response from the servers, with useful helpers so you don't have to dig in the raw response:
+You can access the reCAPTCHA response in three ways: using the `ReCaptcha` facade, the `recaptcha()` helper, and just resolving it from the Service Container with `app('recaptha')`. 
+
+These methods will return the reCAPTCHA Response from the servers, with useful helpers so you don't have to dig in the raw response:
 
 ```php
 <?php
@@ -148,7 +150,9 @@ class CustomController extends Controller
 }
 ```
 
-* `isResolved()`: If the reCAPTCHA check was made in the current Request.
+The class has handy methods you can use to check the status of the reCAPTCHA information:
+
+* `isResolved()`: Returns if the reCAPTCHA check was made in the current Request.
 * `isHuman()`: Detects if the Request has been made by a Human (equal or above threshold).
 * `isRobot()`: Detects if the Request has been made by a Robot (below threshold).
 * `since()`: Returns the time the reCAPTCHA challenge was resolved as a Carbon timestamp.
@@ -205,16 +209,19 @@ Captchavel will inject the Google reCAPTCHA v3 as a deferred script in the head 
 
 #### `manual`
 
-This will disable the global middleware that injects the Google reCAPTCHA script in your frontend. You have total liberty on how to include the reCAPTCHA script and how to enable the reCAPTCHA check in the frontend. 
+This will disable the global middleware that injects the Google reCAPTCHA script in your frontend. You have total liberty on how to include the reCAPTCHA script and how to enable the reCAPTCHA check. 
 
 Since Captchavel won't include anything in your views, you should check out the [Google reCAPTCHA documentation](https://developers.google.com/recaptcha/docs/v3) on how to implement it yourself.
 
+You can even include the `recaptcha::script` blade template in your layout. Check the [editing the script view](#editing-the-script-view) section.
+
+> The manual mode is very handy if your responses have a lot of data and want better performance, because the middleware won't look into the responses.
+
 ### Enable on Local Environment
 
-By default, this package is transparent on `local` environment, so you can develop without having to fill a reCAPTCHA box anywhere.
+By default, this package is transparent on `local`  and `testing` environments, so you can develop without requiring to use reCAPTCHA anywhere.
 
-For troubleshooting, you can forcefully enable Captchavel setting `enable_local` to `true`, or better, using your environment `.env` file and setting `CAPTCHAVEL_LOCAL` to `true`.  
-
+For troubleshooting, you can forcefully enable Captchavel setting `enable_local` to `true`, or better, using your environment `.env` file and setting `CAPTCHAVEL_LOCAL` to `true`.
 
 ```php
 <?php
@@ -247,14 +254,16 @@ Aside from that, you can also override the score using a parameter within the `r
 
 use Illuminate\Support\Facades\Route;
 
-Route::post('form')->uses('CustomController@form')->middleware('recaptcha:0.8');
+Route::post('form')
+    ->uses('CustomController@form')
+    ->middleware('recaptcha:0.8');
 ```
 
 > Issuing `null` as first parameter will make the middleware to use the default threshold. 
 
 ### Request Method
 
-The Google reCAPTCHA library underneath has flexibility in about how to make the request to the reCAPTCHA servers.
+The Google reCAPTCHA library underneath allows to make the request to the reCAPTCHA servers using a custom "Request Method".
 
 The `request_method` accepts the Class you want to instance. You should register it using the Service Container [Contextual Binding](https://laravel.com/docs/container#contextual-binding). 
 
