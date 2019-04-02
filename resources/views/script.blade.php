@@ -2,7 +2,7 @@
 <script>
     // Start Captchavel Script
     let onloadCallback = function () {
-        let site_key = "{{ key }}";
+        let site_key = "{{ $key }}";
 
         if (site_key === '') {
             console.error("You haven't set your Site Key for reCAPTCHA v3. Get it on https://g.co/recaptcha/admin.");
