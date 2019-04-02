@@ -83,21 +83,21 @@ EOT
     {
         $this->get('test-get')
             ->assertSee('Start Captchavel Script')
-            ->assertSee('api.js?render=test-key&onload=onloadCallback');
+            ->assertSee('api.js?render=test-key&onload=captchavelCallback');
     }
 
     public function testDoesntInjectsOnInvalidHtml()
     {
         $this->get('invalid-html')
             ->assertDontSee('Start Captchavel Script')
-            ->assertDontSee('api.js?render=test-key&onload=onloadCallback');
+            ->assertDontSee('api.js?render=test-key&onload=captchavelCallback');
     }
 
     public function testDoesntInjectsOnJson()
     {
         $this->get('json')
             ->assertDontSee('Start Captchavel Script')
-            ->assertDontSee('api.js?render=test-key&onload=onloadCallback');
+            ->assertDontSee('api.js?render=test-key&onload=captchavelCallback');
     }
 
     public function testDoesntInjectsOnAjax()
@@ -106,7 +106,7 @@ EOT
             'X-Requested-With' => 'XMLHttpRequest'
         ])
             ->assertDontSee('Start Captchavel Script')
-            ->assertDontSee('api.js?render=test-key&onload=onloadCallback');
+            ->assertDontSee('api.js?render=test-key&onload=captchavelCallback');
     }
 
 }
