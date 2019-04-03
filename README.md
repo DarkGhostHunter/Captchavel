@@ -298,7 +298,7 @@ Route::post('{product]/review')
 
 The Google reCAPTCHA library underneath allows to make the request to the reCAPTCHA servers using a custom "Request Method". The `request_method` key accepts the Class you want to instance.
 
-The default `null` value is enough for any normal application, but you're free to, for example, create your own logic or use the classes included in the [ReCaptcha package](https://github.com/google/recaptcha/tree/master/src/ReCaptcha/RequestMethod) (that this package requires). You can mimic this next example, were we will use Guzzle.
+The default `null` value is enough for any normal application, but you're free to, for example, create your own logic or use the classes included in the [ReCaptcha package](https://github.com/google/recaptcha/tree/master/src/ReCaptcha/RequestMethod) (that this package requires). 
 
 ```php
 <?php
@@ -310,6 +310,8 @@ return [
     'request_method' => 'App\Http\ReCaptcha\GuzzleRequestMethod',
 ];
 ```
+
+You can mimic this next example were we will use Guzzle.
 
 #### Example implementation
 
