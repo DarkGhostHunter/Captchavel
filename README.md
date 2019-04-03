@@ -8,7 +8,7 @@
 
 Easily integrate Google reCAPTCHA v3 into your Laravel application.
 
-> This is totally compatible with reCAPTCHA v2, so you can use both.
+> This is totally compatible with reCAPTCHA v2, so you can use both. Check [this GitHub comment](https://github.com/google/recaptcha/issues/279#issuecomment-445529732) about the caveats.
 
 ## Installation
 
@@ -105,7 +105,11 @@ Route::post('form')->uses('CustomController@form')->middleware('recaptcha');
 
 ### Accessing the reCAPTCHA response
 
-You can access the reCAPTCHA response in three ways: using the `ReCaptcha` facade, the `recaptcha()` helper, and just resolving it from the Service Container with `app('recaptha')`. 
+You can access the reCAPTCHA response in four ways ways:
+* using [dependency injection](https://laravel.com/docs/container#automatic-injection), 
+* using the `ReCaptcha` facade anywhere in your code, 
+* the `recaptcha()` helper, 
+* and resolving it from the Service Container with `app('recaptha')`. 
 
 These methods will return the reCAPTCHA Response from the servers, with useful helpers so you don't have to dig in the raw response:
 
@@ -115,7 +119,7 @@ These methods will return the reCAPTCHA Response from the servers, with useful h
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use DarkGhostHunter\Captchavel\Facades\ReCaptcha;
+use DarkGhostHunter\Captchavel\ReCaptcha;
 
 class CustomController extends Controller
 {
@@ -133,15 +137,16 @@ class CustomController extends Controller
      * Receive the HTTP POST Request
      * 
      * @param \Illuminate\Http\Request $request
+     * @param \DarkGhostHunter\Captchavel\ReCaptcha $reCaptcha
      * @return \Illuminate\Http\Response
      */
-    public function form(Request $request)
+    public function form(Request $request, ReCaptcha $reCaptcha)
     {
         $request->validate([
             'username' => 'required|string|exists:users,username'
         ]);
         
-        if (ReCaptcha::isRobot()) {
+        if ($reCaptcha->isRobot()) {
             return response()->view('web.user.you-are-a-robot');
         }
         
@@ -154,7 +159,7 @@ class CustomController extends Controller
 
 The class has handy methods you can use to check the status of the reCAPTCHA information:
 
-* `isResolved()`: Returns if the reCAPTCHA check was made in the current Request.
+* `isResolved()`: Returns if the reCAPTCHA check was made in the current Request
 * `isHuman()`: Detects if the Request has been made by a Human (equal or above threshold).
 * `isRobot()`: Detects if the Request has been made by a Robot (below threshold).
 * `since()`: Returns the time the reCAPTCHA challenge was resolved as a Carbon timestamp.
@@ -163,9 +168,9 @@ The class has handy methods you can use to check the status of the reCAPTCHA inf
 
 When developing, this package registers a transparent middleware that allows you to work on your application without contacting reCAPTCHA servers ever. Instead, it will always generate a successful "dummy" response with a `1.0` score.
 
-You can override the score to an absolute `0.0` with:
+You can override the score to an absolute `0.0` in two ways:
 
-* appending the `is_robot` to the Request query,
+* appending the `is_robot` key to the Request query,
 
 ```http request
 POST http://myapp.com/login?is_robot
@@ -186,7 +191,7 @@ POST http://myapp.com/login?is_robot
 
 If you want to connect to the reCAPTCHA servers on `local` environment, you can set the `CAPTCHAVEL_LOCAL=true` in your `.env` file.
 
-> The transparent middleware also registers itself on testing environment, so you can test your application using requests made by a robot and made by a human, and an empty `_recaptcha` input.
+> The transparent middleware also registers itself on testing environment, so you can test your application using requests made by a robot and made by a human just adding an empty `_recaptcha` input.
 
 ## Configuration
 
@@ -284,34 +289,31 @@ Aside from that, you can also override the score using a parameter within the `r
 
 use Illuminate\Support\Facades\Route;
 
-Route::post('form')
-    ->uses('CustomController@form')
+Route::post('{product]/review')
+    ->uses('ReviewController@create')
     ->middleware('recaptcha:0.8');
 ```
 
-> Issuing `null` as first parameter will make the middleware to use the default threshold. 
-
 ### Request Method
 
-The Google reCAPTCHA library underneath allows to make the request to the reCAPTCHA servers using a custom "Request Method".
-
-The `request_method` accepts the Class you want to instance. You should register it using the Service Container [Contextual Binding](https://laravel.com/docs/container#contextual-binding). 
+The Google reCAPTCHA library underneath allows to make the request to the reCAPTCHA servers using a custom "Request Method". The `request_method` key accepts the Class you want to instance.
 
 The default `null` value is enough for any normal application, but you're free to, for example, create your own logic or use the classes included in the [ReCaptcha package](https://github.com/google/recaptcha/tree/master/src/ReCaptcha/RequestMethod) (that this package requires). You can mimic this next example, were we will use Guzzle.
-
 
 ```php
 <?php
 
 return [
+    
+    // ...
+    
     'request_method' => 'App\Http\ReCaptcha\GuzzleRequestMethod',
 ];
 ```
 
-
 #### Example implementation
 
-First, we will create our `GuzzleRequestMethod` with the `submit()` method as required. This method will return the reCAPTCHA response from the external server using Guzzle.
+First, we will create our `GuzzleRequestMethod` with the `submit()` method as required. This method will return the reCAPTCHA response from the external server using the Guzzle Client.
 
 `app\Http\ReCaptcha\GuzzleRequestMethod.php`
 ```php
@@ -328,19 +330,19 @@ class GuzzleRequestMethod implements RequestMethod
     /**
      * Submit the request with the specified parameters.
      *
-     * @param RequestParameters $params Request parameters
-     * @return string Body of the reCAPTCHA response
+     * @param RequestParameters $params     Request parameters
+     * @return string                       Body of the reCAPTCHA response
      */
     public function submit(RequestParameters $params) 
     {
-        return (new \GuzzleHttp\Client)
-            ->post($params->toQueryString())
-            ->getBody();
+        return (new \GuzzleHttp\Client)->post($params->toQueryString())
+            ->getBody()
+            ->getContents();
     }
 }
 ```
 
-Then, we will add the class to the `request_method` key in our configuration
+Then, we will add the class to the `request_method` key in our configuration:
 
 `config/captchavel.php`
 ```php
@@ -354,17 +356,17 @@ return [
 ];
 ```
 
-And finally, we will tell the Service Container to give our `GuzzleRequestMethod` to the underneath `ReCaptcha` class when Captchavel tries to instance it.
+Finally, we will tell the Service Container to give our `GuzzleRequestMethod` to the underneath `ReCaptcha` class when Captchavel tries to instance it, using the Service Container [Contextual Binding](https://laravel.com/docs/container#contextual-binding).
 
 `app\Providers\AppServiceProvider.php`
 ```php
 <?php
 namespace App\Providers;
 
+use Illuminate\Support\ServiceProvider;
 use App\Http\ReCaptcha\GuzzleRequestMethod;
 use ReCaptcha\ReCaptcha;
 use ReCaptcha\RequestMethod;
-use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -377,6 +379,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        // ...
+        
         // Tell the Service Container to pass our custom Request Method to the ReCaptcha client 
         $this->app->when(ReCaptcha::class)
             ->needs(RequestMethod::class)
@@ -387,13 +391,15 @@ class AppServiceProvider extends ServiceProvider
 }
 ```
 
+We're leaving the Contextual Binding to you, since your *requester* may need some logic that a simple `app()->make(MyRequester::class)` may not be sufficient.
+
 ### Editing the Script view
 
 You can edit the script Blade view under by just creating a Blade template in `resources/vendor/captchavel/script.blade.php`.
 
-There you can edit how the script is downloaded from Google reCAPTCHA, and how it checks for forms to link with the check in the backend.
+This blade views requires the Google reCAPTCHA v3 script, and detects the forms that need a reCAPTCHA check to be injected inside the request to the application. The view receives the `$key` variable witch is just the reCAPTCHA v3 Site Key. 
 
-The view receives the `$key` variable witch is just the reCAPTCHA Site Key. 
+There you can edit how the script is downloaded from Google, and how it checks for forms to link with the backend.
 
 ## License
 

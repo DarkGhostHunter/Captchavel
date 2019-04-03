@@ -31,7 +31,7 @@ class TransparentRecaptcha extends CheckRecaptcha
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  float  $threshold
-     * @return \DarkGhostHunter\Captchavel\RecaptchaResponseHolder
+     * @return \DarkGhostHunter\Captchavel\ReCaptcha
      */
     protected function resolve(Request $request, float $threshold)
     {

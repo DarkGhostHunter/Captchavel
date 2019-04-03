@@ -2,15 +2,9 @@
 
 namespace DarkGhostHunter\Captchavel\Tests;
 
-use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
-use DarkGhostHunter\Captchavel\Http\Middleware\InjectRecaptchaScript;
-use DarkGhostHunter\Captchavel\CaptchavelServiceProvider;
-use DarkGhostHunter\Captchavel\RecaptchaResponseHolder;
-use Illuminate\Contracts\Http\Kernel;
+use DarkGhostHunter\Captchavel\ReCaptcha;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 use Orchestra\Testbench\TestCase;
-use ReCaptcha\ReCaptcha;
 use ReCaptcha\Response;
 
 class RecaptchaResponseHolderTest extends TestCase
@@ -32,7 +26,7 @@ class RecaptchaResponseHolderTest extends TestCase
     {
         $response = \Mockery::mock(Response::class);
 
-        $holder = new RecaptchaResponseHolder();
+        $holder = new ReCaptcha();
 
         $holder->setResponse($response);
 
@@ -41,7 +35,7 @@ class RecaptchaResponseHolderTest extends TestCase
 
     public function testThreshold()
     {
-        $holder = new RecaptchaResponseHolder();
+        $holder = new ReCaptcha();
 
         $holder->setThreshold(0.4);
 
@@ -55,7 +49,7 @@ class RecaptchaResponseHolderTest extends TestCase
             ->once()
             ->andReturn(Carbon::now()->toIso8601ZuluString());
 
-        $holder = new RecaptchaResponseHolder();
+        $holder = new ReCaptcha();
 
         $holder->setResponse($response);
 
@@ -69,7 +63,7 @@ class RecaptchaResponseHolderTest extends TestCase
             ->twice()
             ->andReturn(0.8);
 
-        $holder = new RecaptchaResponseHolder();
+        $holder = new ReCaptcha();
 
         $holder->setResponse($response);
         $holder->setThreshold(0.5);
@@ -85,7 +79,7 @@ class RecaptchaResponseHolderTest extends TestCase
             ->twice()
             ->andReturn(0.2);
 
-        $holder = new RecaptchaResponseHolder();
+        $holder = new ReCaptcha();
 
         $holder->setResponse($response);
         $holder->setThreshold(0.5);
@@ -96,7 +90,7 @@ class RecaptchaResponseHolderTest extends TestCase
 
     public function testIsResolved()
     {
-        $holder = new RecaptchaResponseHolder();
+        $holder = new ReCaptcha();
 
         $this->assertFalse($holder->isResolved());
 

@@ -6,11 +6,11 @@ use Closure;
 use DarkGhostHunter\Captchavel\Exceptions\FailedRecaptchaException;
 use DarkGhostHunter\Captchavel\Exceptions\InvalidCaptchavelMiddlewareMethod;
 use DarkGhostHunter\Captchavel\Exceptions\InvalidRecaptchaException;
-use DarkGhostHunter\Captchavel\RecaptchaResponseHolder as RecaptchaResponse;
+use DarkGhostHunter\Captchavel\ReCaptcha;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Validation\Factory as Validator;
 use Illuminate\Http\Request;
-use ReCaptcha\ReCaptcha as ResponseFactory;
+use ReCaptcha\ReCaptcha as ReCaptchaFactory;
 
 class CheckRecaptcha
 {
@@ -33,32 +33,32 @@ class CheckRecaptcha
      *
      * @var \ReCaptcha\ReCaptcha
      */
-    protected $recaptchaFactory;
+    protected $reCaptchaFactory;
 
     /**
      * The reCAPTCHA response holder
      *
-     * @var \DarkGhostHunter\Captchavel\RecaptchaResponseHolder
+     * @var \DarkGhostHunter\Captchavel\ReCaptcha
      */
-    protected $response;
+    protected $reCaptcha;
 
     /**
      * CheckRecaptcha constructor.
      *
      * @param  \Illuminate\Contracts\Validation\Factory  $validator
      * @param  \Illuminate\Contracts\Config\Repository  $config
-     * @param  \ReCaptcha\ReCaptcha  $recaptchaFactory
-     * @param  \DarkGhostHunter\Captchavel\RecaptchaResponseHolder  $response
+     * @param  \ReCaptcha\ReCaptcha  $reCaptchaFactory
+     * @param  \DarkGhostHunter\Captchavel\ReCaptcha  $reCaptcha
      */
     public function __construct(Validator $validator,
-                                ResponseFactory $recaptchaFactory,
-                                RecaptchaResponse $response,
-                                Config $config)
+                                Config $config,
+                                ReCaptchaFactory $reCaptchaFactory,
+                                ReCaptcha $reCaptcha)
     {
         $this->validator = $validator;
-        $this->recaptchaFactory = $recaptchaFactory;
-        $this->response = $response;
         $this->config = $config->get('captchavel');
+        $this->reCaptchaFactory = $reCaptchaFactory;
+        $this->reCaptcha = $reCaptcha;
     }
 
     /**
@@ -80,7 +80,7 @@ class CheckRecaptcha
     }
 
     /**
-     * Detect if the Request has been as a POST method
+     * Detect if the Request is a "write" method
      *
      * @param  \Illuminate\Http\Request  $request
      * @return bool
@@ -127,12 +127,12 @@ class CheckRecaptcha
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  float  $threshold
-     * @return \DarkGhostHunter\Captchavel\RecaptchaResponseHolder
+     * @return \DarkGhostHunter\Captchavel\ReCaptcha
      */
     protected function resolve(Request $request, float $threshold)
     {
-        return app('recaptcha')->setResponse(
-            $this->recaptchaFactory
+        return $this->reCaptcha->setResponse(
+            $this->reCaptchaFactory
                 ->setExpectedAction($this->sanitizeAction($request->getRequestUri()))
                 ->setScoreThreshold($threshold)
                 ->verify($request->input('_recaptcha'), $request->getClientIp())

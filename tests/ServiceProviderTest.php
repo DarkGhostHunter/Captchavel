@@ -6,11 +6,11 @@ use DarkGhostHunter\Captchavel\CaptchavelServiceProvider;
 use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
 use DarkGhostHunter\Captchavel\Http\Middleware\InjectRecaptchaScript;
 use DarkGhostHunter\Captchavel\Http\Middleware\TransparentRecaptcha;
-use DarkGhostHunter\Captchavel\RecaptchaResponseHolder;
+use DarkGhostHunter\Captchavel\ReCaptcha;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Str;
 use Orchestra\Testbench\TestCase;
-use ReCaptcha\ReCaptcha;
+use ReCaptcha\ReCaptcha as ReCaptchaFactory;
 
 class ServiceProviderTest extends TestCase
 {
@@ -31,12 +31,12 @@ class ServiceProviderTest extends TestCase
     {
         $instance = $this->app->make('recaptcha');
 
-        $this->assertInstanceOf(RecaptchaResponseHolder::class, $instance);
+        $this->assertInstanceOf(ReCaptcha::class, $instance);
     }
 
     public function testRecaptchaFacade()
     {
-        $this->assertInstanceOf(RecaptchaResponseHolder::class, \ReCaptcha::getFacadeRoot());
+        $this->assertInstanceOf(ReCaptcha::class, \ReCaptcha::getFacadeRoot());
     }
 
     public function testReceivesConfig()
@@ -51,18 +51,18 @@ class ServiceProviderTest extends TestCase
     {
         config()->set('captchavel.secret', Str::random());
 
-        $instance = app()->make(ReCaptcha::class);
+        $instance = app()->make(ReCaptchaFactory::class);
 
-        $this->assertInstanceOf(ReCaptcha::class, $instance);
+        $this->assertInstanceOf(ReCaptchaFactory::class, $instance);
     }
 
     public function testDoesntResolveRecaptchaWithoutSecret()
     {
         $this->expectException(\RuntimeException::class);
 
-        $instance = app()->make(ReCaptcha::class);
+        $instance = app()->make(ReCaptchaFactory::class);
 
-        $this->assertInstanceOf(ReCaptcha::class, $instance);
+        $this->assertInstanceOf(ReCaptchaFactory::class, $instance);
     }
 
     public function testRegisterMiddleware()

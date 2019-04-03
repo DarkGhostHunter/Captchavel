@@ -9,7 +9,7 @@ use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Orchestra\Testbench\TestCase;
-use ReCaptcha\ReCaptcha;
+use ReCaptcha\ReCaptcha as ReCaptchaFactory;
 use ReCaptcha\RequestMethod;
 use ReCaptcha\Response;
 
@@ -57,7 +57,7 @@ class CheckRecaptchaTest extends TestCase
             'challenge_ts' => Carbon::now()->toIso8601ZuluString(),
         ]));
 
-        $this->app->when(ReCaptcha::class)
+        $this->app->when(ReCaptchaFactory::class)
             ->needs(RequestMethod::class)
             ->give(function ($app) use ($mockRequester) {
                 return $mockRequester;
@@ -102,7 +102,7 @@ class CheckRecaptchaTest extends TestCase
             'challenge_ts' => Carbon::now()->toIso8601ZuluString(),
         ]));
 
-        $this->app->when(ReCaptcha::class)
+        $this->app->when(ReCaptchaFactory::class)
             ->needs(RequestMethod::class)
             ->give(function ($app) use ($mockRequester) {
                 return $mockRequester;
@@ -116,7 +116,7 @@ class CheckRecaptchaTest extends TestCase
 
     public function testMiddlewareAcceptsParameter()
     {
-        $mockReCaptchaFactory = \Mockery::mock(ReCaptcha::class);
+        $mockReCaptchaFactory = \Mockery::mock(ReCaptchaFactory::class);
         $mockReCaptchaFactory->shouldReceive('setExpectedAction')
             ->once()
             ->andReturnSelf();
@@ -132,19 +132,18 @@ class CheckRecaptchaTest extends TestCase
             ->andReturn(new Response(true, [], null, null, null, 1.0, null));
 
         $this->app->when(CheckRecaptcha::class)
-            ->needs(ReCaptcha::class)
+            ->needs(ReCaptchaFactory::class)
             ->give(function () use ($mockReCaptchaFactory) {
                 return $mockReCaptchaFactory;
             });
 
         $this->app->make('router')
             ->post('test-post', function () {
-                $this->assertTrue($this->app->make('recaptcha')->isResolved());
-                $this->assertTrue($this->app->make('recaptcha')->isHuman());
+                return 'reaches';
             })
             ->middleware('recaptcha:0.9');
 
-        $this->post('test-post', [ '_recaptcha' => Str::random(356)])
+        $this->post('test-post', [ '_recaptcha' => Str::random(356) ])
             ->assertOk();
     }
 }

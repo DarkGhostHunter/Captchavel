@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Facade;
  * @method \ReCaptcha\Response          response()
  * @method \Illuminate\Support\Carbon   getSince()
  *
- * @see \DarkGhostHunter\Captchavel\RecaptchaResponseHolder
+ * @see \DarkGhostHunter\Captchavel\ReCaptcha
  */
 class ReCaptcha extends Facade
 {

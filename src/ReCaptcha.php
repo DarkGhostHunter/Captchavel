@@ -5,7 +5,7 @@ namespace DarkGhostHunter\Captchavel;
 use Illuminate\Support\Carbon;
 use ReCaptcha\Response;
 
-class RecaptchaResponseHolder
+class ReCaptcha
 {
     /**
      * The reCAPTCHA response
@@ -32,7 +32,7 @@ class RecaptchaResponseHolder
      * Sets the Recaptcha
      *
      * @param  \ReCaptcha\Response  $response
-     * @return \DarkGhostHunter\Captchavel\RecaptchaResponseHolder
+     * @return \DarkGhostHunter\Captchavel\ReCaptcha
      */
     public function setResponse(Response $response)
     {
@@ -65,7 +65,7 @@ class RecaptchaResponseHolder
      * Sets the Threshold
      *
      * @param  float  $threshold
-     * @return \DarkGhostHunter\Captchavel\RecaptchaResponseHolder
+     * @return \DarkGhostHunter\Captchavel\ReCaptcha
      */
     public function setThreshold(float $threshold)
     {

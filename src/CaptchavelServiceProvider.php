@@ -6,8 +6,9 @@ use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
 use DarkGhostHunter\Captchavel\Http\Middleware\InjectRecaptchaScript;
 use DarkGhostHunter\Captchavel\Http\Middleware\TransparentRecaptcha;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
-use ReCaptcha\ReCaptcha;
+use ReCaptcha\ReCaptcha as ReCaptchaFactory;
 
 class CaptchavelServiceProvider extends ServiceProvider
 {
@@ -51,13 +52,13 @@ class CaptchavelServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/captchavel.php', 'captchavel');
 
         // When the application tries to resolve the ReCaptcha instance, we will pass the Site Key.
-        $this->app->when(ReCaptcha::class)
+        $this->app->when(ReCaptchaFactory::class)
             ->needs('$secret')
             ->give(function ($app) {
                 return $app->make('config')->get('captchavel.secret');
             });
 
-        $this->app->singleton('recaptcha', RecaptchaResponseHolder::class);
+        $this->app->singleton('recaptcha', ReCaptcha::class);
     }
 
     /**
@@ -99,7 +100,7 @@ class CaptchavelServiceProvider extends ServiceProvider
      * @param  \Illuminate\Routing\Router  $router
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    protected function registerMiddleware(\Illuminate\Routing\Router $router)
+    protected function registerMiddleware(Router $router)
     {
         $router->aliasMiddleware('recaptcha', CheckRecaptcha::class);
         $router->aliasMiddleware('recaptcha-inject', InjectRecaptchaScript::class);
@@ -114,7 +115,7 @@ class CaptchavelServiceProvider extends ServiceProvider
      *
      * @param  \Illuminate\Routing\Router  $router
      */
-    protected function registerTransparentMiddleware(\Illuminate\Routing\Router $router)
+    protected function registerTransparentMiddleware(Router $router)
     {
         $router->aliasMiddleware('recaptcha', TransparentRecaptcha::class);
     }
