@@ -18,11 +18,11 @@ composer require darkghosthunter/captchavel
 
 ## Usage
 
-The first thing you need is to add the `CAPTCHAVEL_KEY` and `CAPTCHAVEL_SECRET` environment variables in your `.env` file with your reCAPTCHA Site Key and Secret Key, respectively. If you don't have them, you should get into your [Google reCAPTCHA Admin console](https://g.co/recaptcha/admin) and create them for your application.
+The first thing you need is to add the `RECAPTCHA_V3_KEY` and `RECAPTCHA_V3_SECRET` environment variables in your `.env` file with your reCAPTCHA Site Key and Secret Key, respectively. If you don't have them, you should go to your [Google reCAPTCHA Admin console](https://g.co/recaptcha/admin) and create them for your application.
 
 ```dotenv
-CAPTCHAVEL_KEY=JmXJEeOqjHkr9LXEzgjuKsAhV84RH--DvRJo5mXl
-CAPTCHAVEL_SECRET=JmXJEeOqjHkr9WjDR4rjuON1MGxqCxdOA4zDTH0w
+RECAPTCHA_V3_KEY=JmXJEeOqjHkr9LXEzgjuKsAhV84RH--DvRJo5mXl
+RECAPTCHA_V3_SECRET=JmXJEeOqjHkr9WjDR4rjuON1MGxqCxdOA4zDTH0w
 ```
 
 Captchavel by default works on `auto` mode, allowing you minimal configuration in the backend and frontend. Let's start with the latter.
@@ -42,7 +42,7 @@ Just add the `data-recaptcha="true"` attribute to the forms where you want to ha
 
 The Google reCAPTCHA script file from Google will be automatically injected on all responses for better analytics.
 
-> Check the `manual` mode if you want finer control on how to deal with the frontend reCAPTCHA scripts. 
+> Check the `manual` mode if you want control on how to deal with the frontend reCAPTCHA script. 
 
 ### Backend
 
@@ -202,8 +202,8 @@ You will get a config file with this array:
 return [
     'mode' => env('CAPTCHAVEL_MODE', 'auto'),
     'enable_local' => env('CAPTCHAVEL_LOCAL', false),
-    'key' => env('CAPTCHAVEL_KEY'),
-    'secret' => env('CAPTCHAVEL_SECRET'),
+    'key' => env('RECAPTCHA_V3_KEY'),
+    'secret' => env('RECAPTCHA_V3_SECRET'),
     'threshold' => 0.5,
     'request_method' => null,
 ];

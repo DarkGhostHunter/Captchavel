@@ -39,8 +39,8 @@ return [
     |
     */
 
-    'key' => env('CAPTCHAVEL_KEY'),
-    'secret' => env('CAPTCHAVEL_SECRET'),
+    'key' => env('RECAPTCHA_V3_KEY'),
+    'secret' => env('RECAPTCHA_V3_SECRET'),
 
     /*
     |--------------------------------------------------------------------------
