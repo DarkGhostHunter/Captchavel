@@ -236,7 +236,7 @@ Captchavel will inject the Google reCAPTCHA v3 as a deferred script in the head 
 
 This will disable the global middleware that injects the Google reCAPTCHA script in your frontend. You should check out the [Google reCAPTCHA documentation](https://developers.google.com/recaptcha/docs/v3) on how to implement it yourself.
 
-Since the frontend will be free, it gives you freedom to:
+Since the frontend won't have nothing injected, this mode it gives you freedom to:
 
 * manually include the `recaptcha-inject` middleware only in the routes you want,
 * or include the `recaptcha::script` blade template in your layouts you want. 
