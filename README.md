@@ -226,7 +226,7 @@ CAPTCHAVEL_MODE=auto
 
 #### `auto`
 
-The `auto` option leverages the frontend work to you. Just add the `data-recaptcha="true"` attribute to the forms where you want to check for reCAPTCHA.
+The `auto` option leverages the frontend work from you. Just add the `data-recaptcha="true"` attribute to the forms where you want to check for reCAPTCHA.
 
 ```blade
 <form action="/login" method="post" data-recaptcha="true">
@@ -237,7 +237,9 @@ The `auto` option leverages the frontend work to you. Just add the `data-recaptc
 </form>
 ```
 
-Captchavel will inject the Google reCAPTCHA v3 as a deferred script in the head before `<head>` tag, in every response (except JSON, AJAX or anything non-HTML), so it can have more analytics about how users interact with your site.
+Captchavel will inject the Google reCAPTCHA v3 as a deferred script before `<head>` tag, in every response (except JSON, AJAX or anything non-HTML), so it can have more analytics about how users interact with your site.
+
+To override the script that gets injected, take a look in the [editing the script view](#editing-the-script-view) section.
 
 #### `manual`
 
@@ -247,8 +249,6 @@ Since the frontend won't have nothing injected, this mode it gives you freedom t
 
 * manually include the `recaptcha-inject` middleware only in the routes you want,
 * or include the `recaptcha::script` blade template in your layouts you want. 
-
-Take a look in the [editing the script view](#editing-the-script-view) section.
 
 > The manual mode is very handy if your responses have a lot of data and want better performance, because the middleware won't look into the responses.
 
