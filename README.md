@@ -6,7 +6,9 @@
 
 # Captchavel
 
-Easily integrate Google Recaptcha v3 into your Laravel application. 
+Easily integrate Google reCAPTCHA v3 into your Laravel application.
+
+> This is totally compatible with reCAPTCHA v2, so you can use both.
 
 ## Installation
 
