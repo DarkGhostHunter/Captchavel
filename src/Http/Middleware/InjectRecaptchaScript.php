@@ -27,8 +27,8 @@ class InjectRecaptchaScript
     /**
      * InjectRecaptchaScript constructor.
      *
-     * @param  \Illuminate\Contracts\Config\Repository  $config
-     * @param  \Illuminate\Contracts\View\Factory  $view
+     * @param \Illuminate\Contracts\Config\Repository $config
+     * @param \Illuminate\Contracts\View\Factory $view
      */
     public function __construct(Config $config, View $view)
     {
@@ -39,8 +39,8 @@ class InjectRecaptchaScript
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
      * @return mixed
      * @throws \Throwable
      * @throws \\Symfony\Component\HttpKernel\Exception\HttpException
@@ -65,13 +65,17 @@ class InjectRecaptchaScript
      */
     protected function isHtml(Request $request, $response)
     {
-        return $response instanceof Response && $request->acceptsHtml() && !$request->ajax() && !$request->pjax();
+        return $response instanceof Response
+            && $request->acceptsHtml()
+            && ! $request->ajax()
+            && ! $request->pjax()
+            && ! $response->exception;
     }
 
     /**
      * Injects the front-end Scripts
      *
-     * @param  \Illuminate\Http\Response  $response
+     * @param \Illuminate\Http\Response $response
      * @return \Illuminate\Http\Response
      */
     protected function injectScript(Response $response)
@@ -79,7 +83,7 @@ class InjectRecaptchaScript
         // To inject the script automatically, we will do it before the ending
         // head tag. If it's not found, the response may not be valid HTML,
         // so we will bail out returning the original untouched content.
-        if (!$endHeadPosition = stripos($content = $response->content(), '</head>')) {
+        if (! $endHeadPosition = stripos($content = $response->content(), '</head>')) {
             return $response;
         };
 
