@@ -2,19 +2,7 @@
 
 namespace DarkGhostHunter\Captchavel\Tests;
 
-use DarkGhostHunter\Captchavel\Exceptions\FailedRecaptchaException;
-use DarkGhostHunter\Captchavel\Exceptions\InvalidCaptchavelMiddlewareMethod;
-use DarkGhostHunter\Captchavel\Exceptions\InvalidRecaptchaException;
-use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
-use Illuminate\Contracts\Http\Kernel;
-use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 use Orchestra\Testbench\TestCase;
-use ReCaptcha\ReCaptcha;
-use ReCaptcha\RequestMethod;
-use ReCaptcha\RequestParameters;
-use ReCaptcha\Response;
 
 class InjectRecaptchaScriptTest extends TestCase
 {
@@ -106,6 +94,14 @@ EOT
             'X-Requested-With' => 'XMLHttpRequest'
         ])
             ->assertDontSee('Start Captchavel Script')
+            ->assertDontSee('api.js?render=test-key&onload=captchavelCallback');
+    }
+
+    public function testDoesntInjectsOnException()
+    {
+        $response = $this->get('route-doesnt-exists-will-trigger-exception');
+
+        $response->assertDontSee('Start Captchavel Script')
             ->assertDontSee('api.js?render=test-key&onload=captchavelCallback');
     }
 
