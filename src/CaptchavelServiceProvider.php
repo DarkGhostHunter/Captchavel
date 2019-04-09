@@ -91,7 +91,7 @@ class CaptchavelServiceProvider extends ServiceProvider
     protected function shouldEnableMiddleware()
     {
         return $this->app->environment('production')
-            || $this->app->environment('local') && $this->app->make('config')->get('captchavel.enable_local');
+            || ($this->app->environment('local') && $this->app->make('config')->get('captchavel.enable_local'));
     }
 
     /**
