@@ -132,10 +132,26 @@ class ServiceProviderTest extends TestCase
         );
     }
 
+    public function testRegisterMiddlewareOnLocalTrue()
+    {
+        $this->app['env'] = 'local';
+        $this->app['config']->set('captchavel.enable_local', true);
+
+        /** @var CaptchavelServiceProvider $provider */
+        $provider = $this->app->make(CaptchavelServiceProvider::class, ['app' => $this->app]);
+
+        $provider->boot();
+
+        /** @var \Illuminate\Routing\Router $router */
+        $router = $this->app->make('router');
+
+        $this->assertEquals(CheckRecaptcha::class, $router->getMiddleware()['recaptcha']);
+    }
+
     public function testPublishesConfigFile()
     {
         $this->artisan('vendor:publish', [
-            '--provider' => 'DarkGhostHunter\Captchavel\CaptchavelServiceProvider'
+            '--provider' => CaptchavelServiceProvider::class
         ]);
 
         $this->assertFileExists(config_path('captchavel.php'));
