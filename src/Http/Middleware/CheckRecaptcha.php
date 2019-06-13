@@ -101,7 +101,7 @@ class CheckRecaptcha
     protected function hasValidRequest(Request $request)
     {
         $isValid = !$this->validator->make($request->only('_recaptcha'), [
-            '_recaptcha' => 'required|string|size:356',
+            '_recaptcha' => 'required|string|between:300,400',
         ])->fails();
 
         return throw_unless($isValid, InvalidRecaptchaException::class, $request->only('_recaptcha'));
