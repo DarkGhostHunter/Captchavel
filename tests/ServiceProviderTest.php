@@ -8,6 +8,7 @@ use DarkGhostHunter\Captchavel\Http\Middleware\InjectRecaptchaScript;
 use DarkGhostHunter\Captchavel\Http\Middleware\TransparentRecaptcha;
 use DarkGhostHunter\Captchavel\ReCaptcha;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Str;
 use Orchestra\Testbench\TestCase;
 use ReCaptcha\ReCaptcha as ReCaptchaFactory;
@@ -158,6 +159,20 @@ class ServiceProviderTest extends TestCase
         $this->assertFileIsReadable(config_path('captchavel.php'));
         $this->assertFileEquals(config_path('captchavel.php'), __DIR__ . '/../config/captchavel.php');
         $this->assertTrue(unlink(config_path('captchavel.php')));
+    }
+
+    public function testRegistersMacros()
+    {
+        \DarkGhostHunter\Captchavel\Facades\ReCaptcha::shouldReceive('isHuman')
+            ->once()
+            ->andReturnTrue();
+
+        \DarkGhostHunter\Captchavel\Facades\ReCaptcha::shouldReceive('isRobot')
+            ->once()
+            ->andReturnFalse();
+
+        $this->assertTrue(Request::isHuman());
+        $this->assertFalse(Request::isRobot());
     }
 
 }

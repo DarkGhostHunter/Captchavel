@@ -31,7 +31,7 @@ Captchavel by default works on `auto` mode, allowing you minimal configuration i
 
 ### Frontend
 
-Just add the `data-recaptcha="true"` attribute to the forms where you want to have the reCAPTCHA check. The script will detect these forms an add a reCAPTCHA token to them so they can be checked in the backend. 
+Just add the `data-recaptcha="true"` attribute to the forms where you want to have the reCAPTCHA check. A JavaScript will be injected in all your responses that will detect these forms an add a reCAPTCHA token to them so they can be checked in the backend. 
 
 ```blade
 <form action="/login" method="post" data-recaptcha="true">
@@ -42,13 +42,15 @@ Just add the `data-recaptcha="true"` attribute to the forms where you want to ha
 </form>
 ``` 
 
-The Google reCAPTCHA script file from Google will be automatically injected on all responses for better analytics.
+The Google reCAPTCHA script from Google will be automatically injected on all responses for better analytics.
 
 > Check the `manual` mode if you want control on how to deal with the frontend reCAPTCHA script. 
 
 ### Backend
 
 After that, you should add the `recaptcha` middleware inside your controllers that will receive input and you want to *protect* with the reCAPTCHA check.
+
+You can use the `isHuman()` and `isRobot()` methods in the Request instance to check if the request was made by a human or a robot, respectively.
 
 ```php
 <?php
@@ -81,13 +83,13 @@ class CustomController extends Controller
             'username' => 'required|string|exists:users,username'
         ]);
         
-        // ...
+        if ($request->isRobot()) {
+            return response()->view('web.user.pending_approval');
+        }
         
         return response()->view('web.user.success');
         
     }
-    
-    // ...
 }
 ```
 
@@ -105,7 +107,8 @@ Route::post('form')->uses('CustomController@form')->middleware('recaptcha');
 
 ### Accessing the reCAPTCHA response
 
-You can access the reCAPTCHA response in four ways ways:
+You can access the reCAPTCHA response in four ways:
+
 * using [dependency injection](https://laravel.com/docs/container#automatic-injection), 
 * using the `ReCaptcha` facade anywhere in your code, 
 * the `recaptcha()` helper, 
@@ -139,6 +142,7 @@ class CustomController extends Controller
      * @param \Illuminate\Http\Request $request
      * @param \DarkGhostHunter\Captchavel\ReCaptcha $reCaptcha
      * @return \Illuminate\Http\Response
+     * @throws \DarkGhostHunter\Captchavel\Exceptions\RecaptchaNotResolvedException
      */
     public function form(Request $request, ReCaptcha $reCaptcha)
     {
@@ -163,6 +167,8 @@ The class has handy methods you can use to check the status of the reCAPTCHA inf
 * `isHuman()`: Detects if the Request has been made by a Human (equal or above threshold).
 * `isRobot()`: Detects if the Request has been made by a Robot (below threshold).
 * `since()`: Returns the time the reCAPTCHA challenge was resolved as a Carbon timestamp.
+
+> If you try to check if the response while the reCAPTCHA wasn't resolved, you will get a `RecaptchaNotResolvedException`.
 
 ## Local development and robot requests 
 
@@ -191,7 +197,7 @@ POST http://myapp.com/login?is_robot
 
 If you want to connect to the reCAPTCHA servers on `local` environment, you can set the `CAPTCHAVEL_LOCAL=true` in your `.env` file.
 
-> The transparent middleware also registers itself on testing environment, so you can test your application using requests made by a robot and made by a human just adding an empty `_recaptcha` input.
+> The transparent middleware also registers itself on testing environment, so you can test your application using requests made by a robot and made by a human just adding an empty `_recaptcha` input. Sweet!
 
 ## Configuration
 
@@ -268,7 +274,7 @@ return [
 
 ### Key and Secret
 
-There parameters are self-explanatory. One is the reCAPTCHA Site Key, which is shown publicly in your views, and the Secret, which is used to recover the user interaction information privately inside your application.
+These parameters are self-explanatory. One is the reCAPTCHA Site Key, which is shown publicly in your views, and the Secret, which is used to recover the user interaction information privately inside your application.
 
 If you don't have them, use the [Google reCAPTCHA Admin console](https://g.co/recaptcha/admin) to create a pair. 
 
@@ -289,8 +295,12 @@ Aside from that, you can also override the score using a parameter within the `r
 
 use Illuminate\Support\Facades\Route;
 
-Route::post('{product]/review')
-    ->uses('ReviewController@create')
+Route::post('{product}/comments')
+    ->uses('Product/CommentController@create')
+    ->middleware('recaptcha:0.3');
+
+Route::post('{product}/review')
+    ->uses('Product/ReviewController@create')
     ->middleware('recaptcha:0.8');
 ```
 

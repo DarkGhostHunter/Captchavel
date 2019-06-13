@@ -6,6 +6,7 @@ use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
 use DarkGhostHunter\Captchavel\Http\Middleware\InjectRecaptchaScript;
 use DarkGhostHunter\Captchavel\Http\Middleware\TransparentRecaptcha;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use ReCaptcha\ReCaptcha as ReCaptchaFactory;
@@ -13,43 +14,14 @@ use ReCaptcha\ReCaptcha as ReCaptchaFactory;
 class CaptchavelServiceProvider extends ServiceProvider
 {
     /**
-     * Bootstrap the application services.
-     *
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     */
-    public function boot()
-    {
-        /*
-         * Optional methods to load your package assets
-         */
-        // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'captchavel');
-         $this->loadViewsFrom(__DIR__.'/../resources/views', 'captchavel');
-        // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        // $this->loadRoutesFrom(__DIR__.'/routes.php');
-
-        if ($this->app->runningInConsole()) {
-            $this->publishes([
-                __DIR__.'/../config/captchavel.php' => config_path('captchavel.php'),
-            ], 'config');
-
-            // Publishing the views.
-            $this->publishes([
-                __DIR__.'/../resources/views' => resource_path('views/vendor/captchavel'),
-            ], 'views');
-        }
-
-        $this->bootMiddleware();
-    }
-
-    /**
      * Register the application services.
      *
-     * @void
+     * @return void
      */
     public function register()
     {
         // Automatically apply the package configuration
-        $this->mergeConfigFrom(__DIR__.'/../config/captchavel.php', 'captchavel');
+        $this->mergeConfigFrom(__DIR__ . '/../config/captchavel.php', 'captchavel');
 
         // When the application tries to resolve the ReCaptcha instance, we will pass the Site Key.
         $this->app->when(ReCaptchaFactory::class)
@@ -59,6 +31,30 @@ class CaptchavelServiceProvider extends ServiceProvider
             });
 
         $this->app->singleton('recaptcha', ReCaptcha::class);
+    }
+
+    /**
+     * Bootstrap the application services.
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     */
+    public function boot()
+    {
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'captchavel');
+
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../config/captchavel.php' => config_path('captchavel.php'),
+            ], 'config');
+
+            // Publishing the views.
+            $this->publishes([
+                __DIR__ . '/../resources/views' => resource_path('views/vendor/captchavel'),
+            ], 'views');
+        }
+
+        $this->bootMiddleware();
+        $this->extendRequestMacro();
     }
 
     /**
@@ -76,9 +72,9 @@ class CaptchavelServiceProvider extends ServiceProvider
         // and package config. If we shouldn't, we will register a transparent middleware in the
         // application to avoid the errors when the "recaptcha" is used but not registered.
         if ($this->shouldEnableMiddleware()) {
-            $this->registerMiddleware($router);
+            $this->addMiddleware($router);
         } else {
-            $this->registerTransparentMiddleware($router);
+            $this->addTransparentMiddleware($router);
         }
     }
 
@@ -97,10 +93,10 @@ class CaptchavelServiceProvider extends ServiceProvider
     /**
      * Registers real middleware for the package
      *
-     * @param  \Illuminate\Routing\Router  $router
+     * @param \Illuminate\Routing\Router $router
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    protected function registerMiddleware(Router $router)
+    protected function addMiddleware(Router $router)
     {
         $router->aliasMiddleware('recaptcha', CheckRecaptcha::class);
         $router->aliasMiddleware('recaptcha-inject', InjectRecaptchaScript::class);
@@ -113,11 +109,27 @@ class CaptchavelServiceProvider extends ServiceProvider
     /**
      * Registers a Dummy (Transparent) Middleware
      *
-     * @param  \Illuminate\Routing\Router  $router
+     * @param \Illuminate\Routing\Router $router
      */
-    protected function registerTransparentMiddleware(Router $router)
+    protected function addTransparentMiddleware(Router $router)
     {
         $router->aliasMiddleware('recaptcha', TransparentRecaptcha::class);
+    }
+
+    /**
+     * Extend the Request with a couple of macros
+     *
+     * @return void
+     */
+    protected function extendRequestMacro()
+    {
+        Request::macro('isHuman', function () {
+            return recaptcha()->isHuman();
+        });
+
+        Request::macro('isRobot', function () {
+            return recaptcha()->isRobot();
+        });
     }
 
 }

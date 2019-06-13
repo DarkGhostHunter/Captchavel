@@ -2,6 +2,7 @@
 
 namespace DarkGhostHunter\Captchavel\Tests;
 
+use DarkGhostHunter\Captchavel\Exceptions\RecaptchaNotResolvedException;
 use DarkGhostHunter\Captchavel\ReCaptcha;
 use Illuminate\Support\Carbon;
 use Orchestra\Testbench\TestCase;
@@ -97,6 +98,27 @@ class RecaptchaResponseHolderTest extends TestCase
         $holder->setResponse(\Mockery::mock(Response::class));
 
         $this->assertTrue($holder->isResolved());
+    }
+
+    public function testExceptionOnHumanCheck()
+    {
+        $this->expectException(RecaptchaNotResolvedException::class);
+
+        (new ReCaptcha())->isHuman();
+    }
+
+    public function testExceptionOnRobotCheck()
+    {
+        $this->expectException(RecaptchaNotResolvedException::class);
+
+        (new ReCaptcha())->isRobot();
+    }
+
+    public function testExceptionOnSinceCheck()
+    {
+        $this->expectException(RecaptchaNotResolvedException::class);
+
+        (new ReCaptcha())->since();
     }
 
 }

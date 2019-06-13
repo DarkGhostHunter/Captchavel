@@ -134,9 +134,8 @@ class CheckRecaptcha
         return $this->reCaptcha->setResponse(
             $this->reCaptchaFactory
                 ->setExpectedAction($this->sanitizeAction($request->getRequestUri()))
-                ->setScoreThreshold($threshold)
                 ->verify($request->input('_recaptcha'), $request->getClientIp())
-        );
+        )->setThreshold($threshold);
     }
 
     /**

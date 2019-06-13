@@ -120,13 +120,6 @@ class CheckRecaptchaTest extends TestCase
         $mockReCaptchaFactory->shouldReceive('setExpectedAction')
             ->once()
             ->andReturnSelf();
-        $mockReCaptchaFactory->shouldReceive('setScoreThreshold')
-            ->once()
-            ->withArgs(function ($threshold) {
-                $this->assertEquals(0.9, $threshold);
-                return true;
-            })
-            ->andReturnSelf();
         $mockReCaptchaFactory->shouldReceive('verify')
             ->once()
             ->andReturn(new Response(true, [], null, null, null, 1.0, null));
