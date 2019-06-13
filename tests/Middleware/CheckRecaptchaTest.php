@@ -86,7 +86,7 @@ class CheckRecaptchaTest extends TestCase
 
     public function testFailsInvalidToken()
     {
-        $response = $this->post('test-post', [ '_recaptcha' => Str::random(401)]);
+        $response = $this->post('test-post', [ '_recaptcha' => ['not.string']]);
 
         $response->assertStatus(500);
         $this->assertInstanceOf(InvalidRecaptchaException::class, $response->exception);
