@@ -2,6 +2,7 @@
 
 namespace DarkGhostHunter\Captchavel;
 
+use DarkGhostHunter\Captchavel\Exceptions\RecaptchaNotResolvedException;
 use Illuminate\Support\Carbon;
 use ReCaptcha\Response;
 
@@ -48,7 +49,7 @@ class ReCaptcha
      */
     public function isResolved()
     {
-        return !is_null($this->response);
+        return $this->response !== null;
     }
 
     /**
@@ -78,9 +79,14 @@ class ReCaptcha
      * Return if the Response was made by a Human
      *
      * @return bool
+     * @throws \DarkGhostHunter\Captchavel\Exceptions\RecaptchaNotResolvedException
      */
     public function isHuman()
     {
+        if (!$this->response) {
+            throw new RecaptchaNotResolvedException();
+        }
+
         return $this->response->getScore() >= $this->threshold;
     }
 
@@ -88,6 +94,7 @@ class ReCaptcha
      * Return if the Response was made by a Robot
      *
      * @return bool
+     * @throws \DarkGhostHunter\Captchavel\Exceptions\RecaptchaNotResolvedException
      */
     public function isRobot()
     {
@@ -108,9 +115,14 @@ class ReCaptcha
      * Return the reCAPTCHA Response timestamp as a Carbon instance
      *
      * @return \Illuminate\Support\Carbon
+     * @throws \DarkGhostHunter\Captchavel\Exceptions\RecaptchaNotResolvedException
      */
     public function since()
     {
+        if (!$this->response) {
+            throw new RecaptchaNotResolvedException();
+        }
+
         return $this->since ?? $this->since = Carbon::parse($this->response->getChallengeTs());
     }
 }

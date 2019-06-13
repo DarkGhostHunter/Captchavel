@@ -5,7 +5,7 @@ namespace DarkGhostHunter\Captchavel\Exceptions;
 use Exception;
 use Throwable;
 
-class InvalidRecaptchaException extends Exception
+class InvalidRecaptchaException extends Exception implements CaptchavelException
 {
     protected $message = 'The reCAPTCHA token is empty';
 
