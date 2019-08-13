@@ -120,5 +120,4 @@ class RecaptchaResponseHolderTest extends TestCase
 
         (new ReCaptcha())->since();
     }
-
 }
