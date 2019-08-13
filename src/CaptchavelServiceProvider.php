@@ -30,7 +30,8 @@ class CaptchavelServiceProvider extends ServiceProvider
                 return $app->make('config')->get('captchavel.secret');
             });
 
-        $this->app->singleton('recaptcha', ReCaptcha::class);
+        $this->app->singleton(ReCaptcha::class);
+        $this->app->alias(ReCaptcha::class, 'recaptcha');
     }
 
     /**
