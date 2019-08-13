@@ -1,23 +1,27 @@
 language: php
 
 php:
-  - 7.1
-  - 7.2
-  - 7.3
+    - 7.1
+    - 7.2
+    - 7.3
 
 env:
-  global:
-    - CC_TEST_REPORTER_ID=3cb0149c1ae23214062407321730aa13a558d9e10aa7011e01282b5a46e7f100
+    global:
+        - CC_TEST_REPORTER_ID=3cb0149c1ae23214062407321730aa13a558d9e10aa7011e01282b5a46e7f100
 
 before_script:
-  - travis_retry composer self-update
-  - travis_retry composer update ${COMPOSER_FLAGS} --no-interaction --prefer-source
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
+    - travis_retry composer self-update
+    - travis_retry composer require php-coveralls/php-coveralls:2.1.* --dev
+    - travis_retry composer update ${COMPOSER_FLAGS} --no-interaction --prefer-source
+    - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+    - chmod +x ./cc-test-reporter
+    - ./cc-test-reporter before-build
 
 script:
-  - ./vendor/bin/phpunit -c ./ --coverage-clover build/logs/clover.xml
+    - ./vendor/bin/phpunit
 
 after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+    - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+
+after_success:
+    - travis_retry php vendor/bin/php-coveralls --verbose
