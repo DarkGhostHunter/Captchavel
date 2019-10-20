@@ -11,7 +11,7 @@ class TransparentRecaptcha extends CheckRecaptcha
     /**
      * Return if the Request has a valid reCAPTCHA token
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @return bool
      * @throws \Throwable
      */
@@ -35,13 +35,14 @@ class TransparentRecaptcha extends CheckRecaptcha
      */
     protected function resolve(Request $request, float $threshold)
     {
-        return app('recaptcha')->setResponse(
-            new Response(true,
+        return $this->reCaptcha->setResponse(
+            new Response(
+                true,
                 [],
                 null,
                 now()->toIso8601ZuluString(),
                 null,
-                $request->query->has('is_robot') || $request->input('is_robot') === true ? 0 : 1,
+                (int)$request->query->has('is_robot'),
                 $this->sanitizeAction($request->getRequestUri()))
         );
     }

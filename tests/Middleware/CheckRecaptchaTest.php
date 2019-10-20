@@ -6,6 +6,7 @@ use DarkGhostHunter\Captchavel\Exceptions\FailedRecaptchaException;
 use DarkGhostHunter\Captchavel\Exceptions\InvalidCaptchavelMiddlewareMethod;
 use DarkGhostHunter\Captchavel\Exceptions\InvalidRecaptchaException;
 use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
+use DarkGhostHunter\Captchavel\ReCaptcha;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Orchestra\Testbench\TestCase;
@@ -45,6 +46,33 @@ class CheckRecaptchaTest extends TestCase
         $app->make('router')->get('test-get-with-middleware', function () { return 'true'; })->middleware('recaptcha');
         $app->make('router')->get('test-get', function () { return 'true'; });
         $app->make('router')->post('test-post', function () { return 'true'; })->middleware('recaptcha');
+    }
+
+    public function testSameRecaptchaInstance()
+    {
+        $mockRequester = \Mockery::mock(RequestMethod::class);
+        $mockRequester->shouldReceive('submit')->andReturn(json_encode([
+            'success' => true,
+            'score' => 0.8,
+            'action' => '/testpost',
+            'challenge_ts' => Carbon::now()->toIso8601ZuluString(),
+        ]));
+
+        $this->app->when(ReCaptchaFactory::class)
+            ->needs(RequestMethod::class)
+            ->give(function () use ($mockRequester) {
+                return $mockRequester;
+            });
+
+        $this->post('test-post', [
+            '_recaptcha' => Str::random(356)
+        ])->assertOk();
+
+        $this->assertEquals(app(ReCaptcha::class), app('recaptcha'));
+        $this->assertEquals(app(ReCaptcha::class), recaptcha());
+        $this->assertNotEquals(app(ReCaptcha::class), new ReCaptcha());
+        $this->assertNotEquals(app('recaptcha'), new ReCaptcha());
+        $this->assertNotEquals(recaptcha(), new ReCaptcha());
     }
 
     public function testRequestWithCaptchaValidates()
