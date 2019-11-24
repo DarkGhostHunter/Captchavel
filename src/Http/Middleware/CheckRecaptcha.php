@@ -3,14 +3,13 @@
 namespace DarkGhostHunter\Captchavel\Http\Middleware;
 
 use Closure;
-use DarkGhostHunter\Captchavel\Exceptions\FailedRecaptchaException;
-use DarkGhostHunter\Captchavel\Exceptions\InvalidCaptchavelMiddlewareMethod;
-use DarkGhostHunter\Captchavel\Exceptions\InvalidRecaptchaException;
+use Illuminate\Http\Request;
 use DarkGhostHunter\Captchavel\ReCaptcha;
+use ReCaptcha\ReCaptcha as ReCaptchaFactory;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Validation\Factory as Validator;
-use Illuminate\Http\Request;
-use ReCaptcha\ReCaptcha as ReCaptchaFactory;
+use DarkGhostHunter\Captchavel\Exceptions\FailedRecaptchaException;
+use DarkGhostHunter\Captchavel\Exceptions\InvalidRecaptchaException;
 
 class CheckRecaptcha
 {
@@ -72,23 +71,12 @@ class CheckRecaptcha
      */
     public function handle($request, Closure $next, float $threshold = null)
     {
-        $this->isPostMethod($request);
-        $this->hasValidRequest($request);
-        $this->hasValidReCaptcha($request, $threshold ?? $this->config['threshold']);
+        if ($request->getRealMethod() === 'POST') {
+            $this->hasValidRequest($request);
+            $this->hasValidReCaptcha($request, $threshold ?? $this->config['threshold']);
+        }
 
         return $next($request);
-    }
-
-    /**
-     * Detect if the Request is a "write" method
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return bool
-     * @throws \Throwable
-     */
-    protected function isPostMethod(Request $request)
-    {
-        return throw_unless($request->getRealMethod() === 'POST', InvalidCaptchavelMiddlewareMethod::class);
     }
 
     /**
