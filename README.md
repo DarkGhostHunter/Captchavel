@@ -42,9 +42,9 @@ Just add the `data-recaptcha="true"` attribute to the forms where you want to ha
 </form>
 ``` 
 
-The Google reCAPTCHA script from Google will be automatically injected on all responses for better analytics.
+The Google reCAPTCHA script from Google will be automatically injected on all responses for better analytics. 
 
-> Check the `manual` mode if you want control on how to deal with the frontend reCAPTCHA script. 
+> Alternatively, you may want to use the [`manual` mode](#manual) if you want control on how to deal with the frontend reCAPTCHA script. 
 
 ### Backend
 
@@ -412,6 +412,16 @@ You can edit the script Blade view under by just creating a Blade template in `r
 This blade views requires the Google reCAPTCHA v3 script, and detects the forms that need a reCAPTCHA check to be injected inside the request to the application. The view receives the `$key` variable witch is just the reCAPTCHA v3 Site Key. 
 
 There you can edit how the script is downloaded from Google, and how it checks for forms to link with the backend.
+
+### AJAX Requests
+
+Depending of your application, AJAX Requests won't include the reCAPTCHA token. This may be for various reasons:
+
+* Using virtual DOM frameworks like Vue and React.
+* Creating a form after the page loaded with JavaScript.
+* An AJAX Requests being done entirely in JavaScript.
+
+In any of these scenarios, you may want disable the injection script and [use the reCAPATCHA v3 scripts directly](https://developers.google.com/recaptcha/docs/v3).
 
 ## License
 

@@ -2,17 +2,16 @@
 
 namespace DarkGhostHunter\Captchavel\Tests;
 
-use DarkGhostHunter\Captchavel\Exceptions\FailedRecaptchaException;
-use DarkGhostHunter\Captchavel\Exceptions\InvalidCaptchavelMiddlewareMethod;
-use DarkGhostHunter\Captchavel\Exceptions\InvalidRecaptchaException;
-use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
-use DarkGhostHunter\Captchavel\ReCaptcha;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
-use Orchestra\Testbench\TestCase;
-use ReCaptcha\ReCaptcha as ReCaptchaFactory;
-use ReCaptcha\RequestMethod;
 use ReCaptcha\Response;
+use Illuminate\Support\Str;
+use ReCaptcha\RequestMethod;
+use Illuminate\Support\Carbon;
+use Orchestra\Testbench\TestCase;
+use DarkGhostHunter\Captchavel\ReCaptcha;
+use ReCaptcha\ReCaptcha as ReCaptchaFactory;
+use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
+use DarkGhostHunter\Captchavel\Exceptions\FailedRecaptchaException;
+use DarkGhostHunter\Captchavel\Exceptions\InvalidRecaptchaException;
 
 class CheckRecaptchaTest extends TestCase
 {
@@ -103,13 +102,11 @@ class CheckRecaptchaTest extends TestCase
 
         $response = $this->get('get-route');
 
-        $response->assertStatus(500);
-        $this->assertInstanceOf(InvalidCaptchavelMiddlewareMethod::class, $response->exception);
+        $response->assertStatus(200);
 
         $response = $this->call('head', 'head-route');
 
-        $response->assertStatus(500);
-        $this->assertInstanceOf(InvalidCaptchavelMiddlewareMethod::class, $response->exception);
+        $response->assertStatus(200);
     }
 
     public function testFailsInvalidToken()
