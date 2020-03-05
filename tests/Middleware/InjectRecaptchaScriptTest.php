@@ -69,40 +69,44 @@ EOT
 
     public function testInjectsScriptAutomatically()
     {
-        $this->get('test-get')
-            ->assertSee('Start Captchavel Script')
-            ->assertSee('api.js?render=test-key&onload=captchavelCallback');
+        $response = $this->get('test-get')
+            ->assertSee('Start Captchavel Script');
+
+        $this->assertStringContainsString('api.js?render=test-key&onload=captchavelCallback', $response->getContent());
     }
 
     public function testDoesntInjectsOnInvalidHtml()
     {
-        $this->get('invalid-html')
-            ->assertDontSee('Start Captchavel Script')
-            ->assertDontSee('api.js?render=test-key&onload=captchavelCallback');
+        $response = $this->get('invalid-html')
+            ->assertDontSee('Start Captchavel Script');
+
+        $this->assertStringNotContainsString('api.js?render=test-key&onload=captchavelCallback', $response->getContent());
     }
 
     public function testDoesntInjectsOnJson()
     {
-        $this->get('json')
-            ->assertDontSee('Start Captchavel Script')
-            ->assertDontSee('api.js?render=test-key&onload=captchavelCallback');
+        $response = $this->get('json')
+            ->assertDontSee('Start Captchavel Script');
+
+        $this->assertStringNotContainsString('api.js?render=test-key&onload=captchavelCallback', $response->getContent());
     }
 
     public function testDoesntInjectsOnAjax()
     {
-        $this->get('test-get', [
+        $response = $this->get('test-get', [
             'X-Requested-With' => 'XMLHttpRequest'
         ])
-            ->assertDontSee('Start Captchavel Script')
-            ->assertDontSee('api.js?render=test-key&onload=captchavelCallback');
+            ->assertDontSee('Start Captchavel Script');
+
+        $this->assertStringNotContainsString('api.js?render=test-key&onload=captchavelCallback', $response->getContent());
     }
 
     public function testDoesntInjectsOnException()
     {
-        $response = $this->get('route-doesnt-exists-will-trigger-exception');
+        $response = $this->get('route-doesnt-exists-will-trigger-exception')
+            ->assertDontSee('Start Captchavel Script');
 
-        $response->assertDontSee('Start Captchavel Script')
-            ->assertDontSee('api.js?render=test-key&onload=captchavelCallback');
+        $this->assertStringNotContainsString('api.js?render=test-key&onload=captchavelCallback', $response->getContent());
     }
 
 }
