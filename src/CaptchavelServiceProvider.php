@@ -2,14 +2,14 @@
 
 namespace DarkGhostHunter\Captchavel;
 
-use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
-use DarkGhostHunter\Captchavel\Http\Middleware\InjectRecaptchaScript;
-use DarkGhostHunter\Captchavel\Http\Middleware\TransparentRecaptcha;
-use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\ServiceProvider;
 use ReCaptcha\ReCaptcha as ReCaptchaFactory;
+use DarkGhostHunter\Captchavel\Http\Middleware\CheckRecaptcha;
+use DarkGhostHunter\Captchavel\Http\Middleware\TransparentRecaptcha;
+use DarkGhostHunter\Captchavel\Http\Middleware\InjectRecaptchaScript;
 
 class CaptchavelServiceProvider extends ServiceProvider
 {

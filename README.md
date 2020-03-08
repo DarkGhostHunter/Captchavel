@@ -2,13 +2,16 @@
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/darkghosthunter/captchavel.svg?style=flat-square)](https://packagist.org/packages/darkghosthunter/captchavel) [![License](https://poser.pugx.org/darkghosthunter/captchavel/license)](https://packagist.org/packages/darkghosthunter/larapoke)
 ![](https://img.shields.io/packagist/php-v/darkghosthunter/captchavel.svg)
- [![Build Status](https://travis-ci.com/DarkGhostHunter/Captchavel.svg?branch=master)](https://travis-ci.com/DarkGhostHunter/Captchavel) [![Coverage Status](https://coveralls.io/repos/github/DarkGhostHunter/Captchavel/badge.svg?branch=master)](https://coveralls.io/github/DarkGhostHunter/Captchavel?branch=master) [![Maintainability](https://api.codeclimate.com/v1/badges/9571f57106069b5f3aac/maintainability)](https://codeclimate.com/github/DarkGhostHunter/Captchavel/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/9571f57106069b5f3aac/test_coverage)](https://codeclimate.com/github/DarkGhostHunter/Captchavel/test_coverage)
-
+ ![](https://github.com/DarkGhostHunter/Captchavel/workflows/PHP%20Composer/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/DarkGhostHunter/Captchavel/badge.svg?branch=master)](https://coveralls.io/github/DarkGhostHunter/Captchavel?branch=master) [![Maintainability](https://api.codeclimate.com/v1/badges/9571f57106069b5f3aac/maintainability)](https://codeclimate.com/github/DarkGhostHunter/Captchavel/maintainability)
 # Captchavel
 
 Easily integrate Google reCAPTCHA v3 into your Laravel application.
 
 > This is totally compatible with reCAPTCHA v2, so you can use both. Check [this GitHub comment](https://github.com/google/recaptcha/issues/279#issuecomment-445529732) about the caveats.
+
+## Requirements
+
+* Laravel 6 or Laravel 7
 
 ## Installation
 
