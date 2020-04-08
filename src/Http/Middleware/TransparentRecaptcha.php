@@ -2,9 +2,9 @@
 
 namespace DarkGhostHunter\Captchavel\Http\Middleware;
 
-use DarkGhostHunter\Captchavel\Exceptions\InvalidRecaptchaException;
-use Illuminate\Http\Request;
 use ReCaptcha\Response;
+use Illuminate\Http\Request;
+use DarkGhostHunter\Captchavel\Exceptions\InvalidRecaptchaException;
 
 class TransparentRecaptcha extends CheckRecaptcha
 {
@@ -42,7 +42,7 @@ class TransparentRecaptcha extends CheckRecaptcha
                 null,
                 now()->toIso8601ZuluString(),
                 null,
-                (int)$request->query->has('is_robot'),
+                (int)$request->has('is_robot'),
                 $this->sanitizeAction($request->getRequestUri()))
         );
     }
