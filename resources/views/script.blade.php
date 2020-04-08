@@ -13,7 +13,8 @@
             .filter((form) => form.dataset.recaptcha === 'true')
             .forEach((form) => {
                 let action = form.action.includes('://') ? (new URL(form.action)).pathname : form.action;
-                form.addEventListener('submit', () => {
+                form.addEventListener('submit', (event) => {
+                    event.stopPropagation();
                     grecaptcha.execute(site_key, {
                         action: action
                             .substring(action.indexOf('?'), action.length)
