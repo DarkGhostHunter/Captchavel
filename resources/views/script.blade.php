@@ -9,41 +9,26 @@
             return;
         }
 
-        let elements = Array.from(document.getElementsByTagName('form'))
-            .filter((form) => form.dataset.recaptcha === 'true');
-
-        let renew = (form) => {
-            let action = form.action.includes('://') ? (new URL(form.action)).pathname : form.action;
-
-            const getKey = () => {
-                grecaptcha.execute(site_key, {
-                    action: action
-                        .substring(action.indexOf('?'), action.length)
-                        .replace(/[^A-z\/_]/gi, '')
-                }).then((token) => {
-                    if (token) {
-                        Array.from(form.getElementsByClassName('recaptcha-token'))
-                            .forEach((input) => input.remove());
-
-                        let child = document.createElement('input');
-
-                        child.setAttribute('type', 'hidden');
-                        child.setAttribute('name', '_recaptcha');
-                        child.setAttribute('class', 'recaptcha-token');
-                        child.setAttribute('value', token);
-
-                        form.appendChild(child);
-                    }
+        Array.from(document.getElementsByTagName('form'))
+            .filter((form) => form.dataset.recaptcha === 'true')
+            .forEach((form) => {
+                let action = form.action.includes('://') ? (new URL(form.action)).pathname : form.action;
+                form.addEventListener('submit', () => {
+                    grecaptcha.execute(site_key, {
+                        action: action
+                            .substring(action.indexOf('?'), action.length)
+                            .replace(/[^A-z\/_]/gi, '')
+                    }).then((token) => {
+                        if (token) {
+                            let child = document.createElement('input');
+                            child.setAttribute('type', 'hidden');
+                            child.setAttribute('name', '_recaptcha');
+                            child.setAttribute('value', token);
+                            form.appendChild(child);
+                        }
+                    });
                 });
-            };
-
-            getKey();
-
-            form.removeEventListener('submit', getKey);
-            form.addEventListener('submit', getKey);
-        };
-
-        setTimeout(() => elements.forEach(renew), 1000 * 120);
+            });
     };
     // End Captchavel Script
 </script>
