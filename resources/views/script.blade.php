@@ -14,7 +14,7 @@
             .forEach((form) => {
                 let action = form.action.includes('://') ? (new URL(form.action)).pathname : form.action;
                 form.addEventListener('submit', (event) => {
-                    event.stopPropagation();
+                    event.preventDefault();
                     grecaptcha.execute(site_key, {
                         action: action
                             .substring(action.indexOf('?'), action.length)
@@ -26,6 +26,7 @@
                             child.setAttribute('name', '_recaptcha');
                             child.setAttribute('value', token);
                             form.appendChild(child);
+                            form.submit();
                         }
                     });
                 });
