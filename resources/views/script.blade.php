@@ -14,21 +14,24 @@
             .forEach((form) => {
                 let action = form.action.includes('://') ? (new URL(form.action)).pathname : form.action;
                 form.addEventListener('submit', (event) => {
-                    event.preventDefault();
-                    grecaptcha.execute(site_key, {
-                        action: action
-                            .substring(action.indexOf('?'), action.length)
-                            .replace(/[^A-z\/_]/gi, '')
-                    }).then((token) => {
-                        if (token) {
-                            let child = document.createElement('input');
-                            child.setAttribute('type', 'hidden');
-                            child.setAttribute('name', '_recaptcha');
-                            child.setAttribute('value', token);
-                            form.appendChild(child);
-                            form.submit();
-                        }
-                    });
+                    // Proceed only if other events have not disabled the form submission.
+                    if (! event.defaultPrevented) {
+                        event.preventDefault();
+                        grecaptcha.execute(site_key, {
+                            action: action
+                                .substring(action.indexOf('?'), action.length)
+                                .replace(/[^A-z\/_]/gi, '')
+                        }).then((token) => {
+                            if (token) {
+                                let child = document.createElement('input');
+                                child.setAttribute('type', 'hidden');
+                                child.setAttribute('name', '_recaptcha');
+                                child.setAttribute('value', token);
+                                form.appendChild(child);
+                                form.submit();
+                            }
+                        });
+                    }
                 });
             });
     };
