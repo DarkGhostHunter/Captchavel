@@ -61,13 +61,15 @@ Form submission is disabled by default until the token from reCAPTCHA is retriev
 </form>
 ```
 
-#### Token resolved helper.
+#### Token resolved helper
 
-When the reCAPTCHA token is being retrieved for the form, the form will have set the property `recaptcha_unresolved` to `true`. You can use this property for your other script to conditionally allow submission or whatever.
+When the reCAPTCHA token is being retrieved for the form, the form will have the property `recaptcha_unresolved` set to `true`. You can use this property for your other scripts to conditionally allow submission or whatever.
 
 ```javascript
 if (form.recaptcha_unresolved) {
     alert('Wait until reCAPTCHA sends the token!');
+} else {
+    form.submit();
 }
 ```
 
