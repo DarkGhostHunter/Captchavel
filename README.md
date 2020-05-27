@@ -3,6 +3,7 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/darkghosthunter/captchavel.svg?style=flat-square)](https://packagist.org/packages/darkghosthunter/captchavel) [![License](https://poser.pugx.org/darkghosthunter/captchavel/license)](https://packagist.org/packages/darkghosthunter/larapoke)
 ![](https://img.shields.io/packagist/php-v/darkghosthunter/captchavel.svg)
  ![](https://github.com/DarkGhostHunter/Captchavel/workflows/PHP%20Composer/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/DarkGhostHunter/Captchavel/badge.svg?branch=master)](https://coveralls.io/github/DarkGhostHunter/Captchavel?branch=master) [![Maintainability](https://api.codeclimate.com/v1/badges/9571f57106069b5f3aac/maintainability)](https://codeclimate.com/github/DarkGhostHunter/Captchavel/maintainability)
+
 # Captchavel
 
 Easily integrate Google reCAPTCHA v3 into your Laravel application.
@@ -45,9 +46,32 @@ Just add the `data-recaptcha="true"` attribute to the forms where you want to ha
 </form>
 ``` 
 
-The Google reCAPTCHA script from Google will be automatically injected on all responses for better analytics. 
+The Google reCAPTCHA script from Google will be automatically injected on all responses for better analytics.
 
-> Alternatively, you may want to use the [`manual` mode](#manual) if you want control on how to deal with the frontend reCAPTCHA script. 
+> Alternatively, you may want to use the [`manual` mode](#manual) if you want control on how to deal with the frontend reCAPTCHA script, or use a [personalized one](#editing-the-script-view).
+
+#### Form submission prevented 
+
+Form submission is disabled by default until the token from reCAPTCHA is retrieved. If you want to disable this behaviour, append `data-recaptcha-dont-prevent` to the form:
+
+```blade
+<!-- This form will be submittable even if the token hasn't been retrieved yet --> 
+<form action="/login" method="post" data-recaptcha="true" data-recaptcha-dont-prevent="true">
+    <!-- ... -->
+</form>
+```
+
+#### Token resolved helper
+
+When the reCAPTCHA token is being retrieved for the form, the form will have the property `recaptcha_unresolved` set to `true`. You can use this property for your other scripts to conditionally allow submission or whatever.
+
+```javascript
+if (form.recaptcha_unresolved) {
+    alert('Wait until reCAPTCHA sends the token!');
+} else {
+    form.submit();
+}
+```
 
 ### Backend
 
@@ -412,19 +436,19 @@ We're leaving the Contextual Binding to you, since your *requester* may need som
 
 You can edit the script Blade view under by just creating a Blade template in `resources/vendor/captchavel/script.blade.php`.
 
-This blade views requires the Google reCAPTCHA v3 script, and detects the forms that need a reCAPTCHA check to be injected inside the request to the application. The view receives the `$key` variable witch is just the reCAPTCHA v3 Site Key. 
+This blade view contains the reCAPTCHA script of the package. The view receives the `$key` variable witch is just the reCAPTCHA v3 Site Key. 
 
-There you can edit how the script is downloaded from Google, and how it checks for forms to link with the backend.
+There you can edit how the script is downloaded from Google, and how it checks for forms to link with the backend, if the default script isn't enough for you. 
 
 ### AJAX Requests
 
-Depending of your application, AJAX Requests won't include the reCAPTCHA token. This may be for various reasons:
+Depending on the application, AJAX Requests won't include the reCAPTCHA token. This may be for various reasons:
 
 * Using virtual DOM frameworks like Vue and React.
 * Creating a form after the page loaded with JavaScript.
 * An AJAX Requests being done entirely in JavaScript.
 
-In any of these scenarios, you may want disable the injection script and [use the reCAPATCHA v3 scripts directly](https://developers.google.com/recaptcha/docs/v3).
+In any of these scenarios, you may want disable the injection script and [use the reCAPATCHA v3 scripts directly](https://developers.google.com/recaptcha/docs/v3) or your [custom script](#editing-the-script-view).
 
 ## License
 
