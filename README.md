@@ -250,11 +250,11 @@ Here is the full array of [reCAPTCHA credentials](#set-up) to use depending on t
 
 ## Testing with Captchavel
 
-When testing your application, you may want to mock the reCAPTCHA responses from the servers. There is no need to the whole client, you can use the `fake()` method of the `Captchavel` facade.
+When unit testing your application, this package [automatically fakes reCAPTCHA responses](#fake-responses) by setting.
 
 > When mocking requests, there is no need to add any reCAPTCHA token or secrets in your tests.
 
-Since you will have access to the Response to check if it was made by a robot or a human, simply use the `asHuman()` and `asRobot()` methods to score `1.0` or `0.0`, respectively.
+When using reCAPTCHA v3 (score), you can fake a response made by a human or robot by simply using the `fakeHuman()` and `fakeRobot()` methods, which will score `1.0` or `0.0` respectively.
 
 ```php
 <?php
@@ -262,15 +262,15 @@ Since you will have access to the Response to check if it was made by a robot or
 use DarkGhostHunter\Captchavel\Facades\Captchavel;
 
 // Let the user login normally.
-Captchavel::fake()->asHuman();
+Captchavel::fakeHuman();
 
 $this->post('login', [
     'email' => 'test@test.com',
     'password' => '123456',
 ])->assertRedirect('user.welcome');
 
-// Let the user login using 2FA.
-Captchavel::fake()->asRobot();
+// ... but if it's a robot, force him to use 2FA.
+Captchavel::fakeRobot();
 
 $this->post('login', [
     'email' => 'test@test.com',
@@ -278,7 +278,9 @@ $this->post('login', [
 ])->assertViewIs('login.2fa');
 ```
 
-Alternatively, `shouldScore()` method that will fake the score for anything you set.
+Alternatively, `fakeScore()` method that will fake any score you set.
+
+> Fake responses don't come with action, hostnames or APK package names.
 
 ### Events
 

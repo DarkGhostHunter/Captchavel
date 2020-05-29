@@ -28,7 +28,7 @@ class CaptchavelFakeTest extends TestCase
 
     public function test_makes_fake_score()
     {
-        Captchavel::fake()->shouldScore(0.3);
+        Captchavel::fakeScore(0.3);
 
         Route::post('test', function (ReCaptchaResponse $response) {
             return [$response->score, $response->isRobot(), $response->isHuman()];
@@ -39,7 +39,7 @@ class CaptchavelFakeTest extends TestCase
 
     public function test_makes_human_score_one()
     {
-        Captchavel::fake()->asHuman();
+        Captchavel::fakeHuman();
 
         Route::post('test', function (ReCaptchaResponse $response) {
             return [$response->score, $response->isRobot(), $response->isHuman()];
@@ -50,7 +50,7 @@ class CaptchavelFakeTest extends TestCase
 
     public function test_makes_robot_score_zero()
     {
-        Captchavel::fake()->asRobot();
+        Captchavel::fakeRobot();
 
         Route::post('test', function (ReCaptchaResponse $response) {
             return [$response->score, $response->isRobot(), $response->isHuman()];

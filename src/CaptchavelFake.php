@@ -49,11 +49,14 @@ class CaptchavelFake extends Captchavel
      * @param  float $score
      * @return $this
      */
-    public function shouldScore(float $score)
+    public function fakeScore(float $score)
     {
         return $this->setResponse(new ReCaptchaResponse([
             'success' => true,
             'score' => $score,
+            'action' => null,
+            'hostname' => null,
+            'apk_package_name' => null,
         ]));
     }
 
@@ -62,9 +65,9 @@ class CaptchavelFake extends Captchavel
      *
      * @return $this
      */
-    public function asRobot()
+    public function fakeRobot()
     {
-        return $this->shouldScore(0);
+        return $this->fakeScore(0);
     }
 
     /**
@@ -72,8 +75,8 @@ class CaptchavelFake extends Captchavel
      *
      * @return $this
      */
-    public function asHuman()
+    public function fakeHuman()
     {
-        return $this->shouldScore(1);
+        return $this->fakeScore(1);
     }
 }

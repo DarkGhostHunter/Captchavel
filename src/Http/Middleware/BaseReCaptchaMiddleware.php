@@ -112,8 +112,9 @@ abstract class BaseReCaptchaMiddleware
         // we will hands out the control to the developer. Otherwise, we will manually create a
         // fake Captchavel instance and look for the "is_robot" parameter to set a fake score.
         if ($this->captchavel instanceof Captchavel && $this->captchavel->isNotResolved()) {
-            $this->captchavel = CaptchavelFacade::fake();
-            $request->has('is_robot') ? $this->captchavel->asRobot() : $this->captchavel->asHuman();
+            $this->captchavel = $request->has('is_robot') ?
+                CaptchavelFacade::fakeRobot() :
+                CaptchavelFacade::fakeHuman();
         }
     }
 

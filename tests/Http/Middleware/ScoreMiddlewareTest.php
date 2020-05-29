@@ -82,6 +82,9 @@ class ScoreMiddlewareTest extends TestCase
             ->assertExactJson([
                 'success' => true,
                 'score' => 1,
+                'action' => null,
+                'hostname' => null,
+                'apk_package_name' => null,
             ]);
 
         $event->assertDispatched(ReCaptchaResponseReceived::class, function ($event) {
@@ -100,6 +103,9 @@ class ScoreMiddlewareTest extends TestCase
             ->assertExactJson([
                 'success' => true,
                 'score' => 0,
+                'action' => null,
+                'hostname' => null,
+                'apk_package_name' => null,
             ]);
 
         $event->assertDispatched(ReCaptchaResponseReceived::class, function ($event) {
