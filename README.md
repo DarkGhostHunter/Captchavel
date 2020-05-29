@@ -78,7 +78,6 @@ Add the `recaptcha.v2` middleware to your `POST` routes. The middleware will cat
 When the validation fails, the user will be redirected back to the form route, or a JSON response will be returned with the validation errors.
 
 ```php
-<?php
 Route::post('login', 'LoginController@login')
     ->middleware('recaptcha.v2:checkbox');
 ``` 
@@ -125,7 +124,6 @@ The middleware accepts three parameters in the following order:
 3. Input: The name of the reCAPTCHA input to verify.
 
 ```php
-<?php
 Route::post('comment', 'CommentController@store')
     ->middleware('recaptcha.v3:0.7,login,custom-recaptcha-input');
 ```
@@ -260,6 +258,7 @@ Since you will have access to the Response to check if it was made by a robot or
 
 ```php
 <?php
+
 use DarkGhostHunter\Captchavel\Facades\Captchavel;
 
 // Let the user login normally.
