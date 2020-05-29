@@ -87,13 +87,13 @@ Route::post('login', 'LoginController@login')
 
 ### Score driven interaction
 
-The reCAPTCHA v3 middleware works differently from v2. This is a score-driven challenge where robots will get lower scores than humans, with a default threshold of `0.5`.
+The reCAPTCHA v3 middleware works differently from v2. This is a score-driven challenge between `0.0` and `1.0` where robots will get lower scores than humans. The default threshold is `0.5`.
 
 Simply add the `recaptcha.v3` middleware to your route:
 
 ```php
 Route::post('comment', 'CommentController@store')
-    ->middleware('recaptcha.v3:0.8');
+    ->middleware('recaptcha.v3');
 ```
 
 Once the challenge has been received, you will have access to two methods from the Request instance: `isHuman()` and `isRobot()`, which return `true` or `false`:
@@ -118,11 +118,11 @@ public function store(Request $request, Post $post)
 
 #### Threshold, action and input name
 
-The middleware accepts two parameters in the following order:
+The middleware accepts three parameters in the following order:
 
-* Threshold: Values **above or equal** are considered human.
-* Action: The action name to optionally check against.
-* Input: The name of the reCAPTCHA input to verify.
+1. Threshold: Values **above or equal** are considered human.
+2. Action: The action name to optionally check against.
+3. Input: The name of the reCAPTCHA input to verify.
 
 ```php
 <?php
@@ -224,7 +224,7 @@ RECAPTCHA_APK_PACKAGE_NAME=my.package.name
 
 If you are not verifying the Hostname or APK Package Name in your [reCAPTCHA Admin Panel](https://www.google.com/recaptcha/admin/), you will have to issue the strings in the environment file. 
 
-When the reCAPTCHA response from the servers is retrieved, it will be checked against these values. In case of mismatch, a validation exception will be thrown.
+When the reCAPTCHA response from the servers is retrieved, it will be checked against these values when present. In case of mismatch, a validation exception will be thrown.
 
 ### Threshold
 
@@ -236,7 +236,7 @@ return [
 
 Default threshold to check against reCAPTCHA v3 challenges. Values **equal or above** will be considered as human.
 
-If you're not using reCAPTCHA v3, or you're fine with the default, leave this alone.
+If you're not using reCAPTCHA v3, or you're fine with the default, leave this alone. You can still [override the default in a per-route basis](#threshold-action-and-input-name).
 
 ### Credentials
 
@@ -254,7 +254,7 @@ Here is the full array of [reCAPTCHA credentials](#set-up) to use depending on t
 
 When testing your application, you may want to mock the reCAPTCHA responses from the servers. There is no need to the whole client, you can use the `fake()` method of the `Captchavel` facade.
 
-> When mocking requests, there is no need to add any reCAPTCHA token to your tests.
+> When mocking requests, there is no need to add any reCAPTCHA token or secrets in your tests.
 
 Since you will have access to the Response to check if it was made by a robot or a human, simply use the `asHuman()` and `asRobot()` methods to score `1.0` or `0.0`, respectively.
 
