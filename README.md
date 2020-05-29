@@ -6,13 +6,27 @@
 
 # Captchavel
 
-Easily integrate Google reCAPTCHA v3 into your Laravel application.
+Integrate reCAPTCHA into your Laravel app better than the Big G itself!
 
-> This is totally compatible with reCAPTCHA v2, so you can use both. Check [this GitHub comment](https://github.com/google/recaptcha/issues/279#issuecomment-445529732) about the caveats.
+It uses your Laravel HTTP Client and **HTTP/2**, making your app **fast**. You only need a couple of lines to integrate.
+
+## Table of Contents
+
+* [Requirements](#requirements)
+* [Installation](#installation)
+* [Set Up](#set-up)
+* [Usage](#usage)
+  - [Checkbox, Invisible and Android challenges](#checkbox-invisible-and-android-challenges)
+  - [Score driven interaction](#score-driven-interaction)
+* [Frontend integration](#frontend-integration)
+* [Advanced configuration](#advanced-configuration)
+* [Testing with Captchavel](#testing-with-captchavel)
+* [Security](#security)
+* [License](#license)
 
 ## Requirements
 
-* Laravel 6 or Laravel 7
+* Laravel 7.x
 
 ## Installation
 
@@ -22,213 +36,143 @@ You can install the package via composer:
 composer require darkghosthunter/captchavel
 ```
 
-## Usage
+## Set up
 
-The first thing you need is to add the `RECAPTCHA_V3_KEY` and `RECAPTCHA_V3_SECRET` environment variables in your `.env` file with your reCAPTCHA Site Key and Secret Key, respectively. If you don't have them, you should go to your [Google reCAPTCHA Admin console](https://g.co/recaptcha/admin) and create them for your application.
+Add the reCAPTCHA keys for your site to the environment file of your project. You can add each of them for reCAPTCHA v2 **checkbox**, **invisible**, **Android**, and **v3** (score).
+
+If you don't have one, generate it in your [reCAPTCHA Admin panel](https://www.google.com/recaptcha/admin/).
 
 ```dotenv
-RECAPTCHA_V3_KEY=JmXJEeOqjHkr9LXEzgjuKsAhV84RH--DvRJo5mXl
-RECAPTCHA_V3_SECRET=JmXJEeOqjHkr9WjDR4rjuON1MGxqCxdOA4zDTH0w
+RECAPTCHA_V2_CHECKBOX_SECRET=6t5geA1UAAAAAN...
+RECAPTCHA_V2_CHECKBOX_KEY=6t5geA1UAAAAAN...
+
+RECAPTCHA_V2_INVISIBLE_SECRET=6t5geA2UAAAAAN...
+RECAPTCHA_V2_INVISIBLE_KEY=6t5geA2UAAAAAN...
+
+RECAPTCHA_V2_ANDROID_SECRET=6t5geA3UAAAAAN...
+RECAPTCHA_V2_ANDROID_KEY=6t5geA3UAAAAAN...
+
+RECAPTCHA_V3_SECRET=6t5geA4UAAAAAN...
+RECAPTCHA_V3_KEY=6t5geA4UAAAAAN...
 ```
 
-Captchavel by default works on `auto` mode, allowing you minimal configuration in the backend and frontend. Let's start with the latter.
+This allows you to check different reCAPTCHA mechanisms using the same application, in different environments.
 
-### Frontend
+> Captchavel already comes with v2 keys for local development. For v3, you will need to create your own set of credentials.
 
-Just add the `data-recaptcha="true"` attribute to the forms where you want to have the reCAPTCHA check. A JavaScript will be injected in all your responses that will detect these forms an add a reCAPTCHA token to them so they can be checked in the backend. 
+## Usage
 
-```blade
-<form action="/login" method="post" data-recaptcha="true">
-    @csrf
-    <input type="text" class="form-control" name="username" placeholder="Username">
-    <input type="password" class="form-control" name="password" placeholder="Password">
-    <button type="submit" class="btn btn-primary">Log in</button>
-</form>
+After you integrate reCAPTCHA into your frontend or Android app, set the Captchavel middleware in the routes you want:
+
+* `recaptcha.v2` for Checkbox, Invisible and Android challenges.
+* `recaptcha.v3` for Score driven interaction.
+
+### Checkbox, Invisible and Android challenges
+
+Add the `recaptcha.v2` middleware to your `POST` routes. The middleware will catch the `g-recaptcha-response` input and check if it's valid.
+
+* `recaptcha.v2:checkbox` for explicitly rendered checkbox challenges.
+* `recaptcha.v2:invisible` for invisible challenges.
+* `recaptcha.v2:android` for Android app challenges.
+
+When the validation fails, the user will be redirected back to the form route, or a JSON response will be returned with the validation errors.
+
+```php
+<?php
+Route::post('login', 'LoginController@login')
+    ->middleware('recaptcha.v2:checkbox');
 ``` 
 
-The Google reCAPTCHA script from Google will be automatically injected on all responses for better analytics.
+> You can change the input name from `g-recaptcha-response` to a custom using a second parameter, like `recaptcha.v2:checkbox,_recaptcha`.
 
-> Alternatively, you may want to use the [`manual` mode](#manual) if you want control on how to deal with the frontend reCAPTCHA script, or use a [personalized one](#editing-the-script-view).
+### Score driven interaction
 
-#### Form submission prevented 
+The reCAPTCHA v3 middleware works differently from v2. This is a score-driven challenge where robots will get lower scores than humans, with a default threshold of `0.5`.
 
-Form submission is disabled by default until the token from reCAPTCHA is retrieved. If you want to disable this behaviour, append `data-recaptcha-dont-prevent` to the form:
+Simply add the `recaptcha.v3` middleware to your route:
+
+```php
+Route::post('comment', 'CommentController@store')
+    ->middleware('recaptcha.v3:0.8');
+```
+
+Once the challenge has been received, you will have access to two methods from the Request instance: `isHuman()` and `isRobot()`, which return `true` or `false`:
+
+```php
+public function store(Request $request, Post $post)
+{
+    $request->validate([
+        'body' => 'required|string|max:255'
+    ]);
+    
+    $comment = $post->comment()->make($request->only('body'));
+    
+    // Flag the comment as "moderated" if it was a written by robot. 
+    $comment->moderated = $request->isRobot();
+    
+    $comment->save();
+    
+    return view('post.comment.show', ['comment' => $comment]);
+}
+```
+
+#### Threshold, action and input name
+
+The middleware accepts two parameters in the following order:
+
+* Threshold: Values **above or equal** are considered human.
+* Action: The action name to optionally check against.
+* Input: The name of the reCAPTCHA input to verify.
+
+```php
+<?php
+Route::post('comment', 'CommentController@store')
+    ->middleware('recaptcha.v3:0.7,login,custom-recaptcha-input');
+```
+
+> When checking the action name, ensure your Frontend action matches 
+
+#### Faking robot and human scores 
+
+You can easily fake a reCAPTCHA v3 response in your local development by setting `CAPTCHAVEL_FAKE` to `true`.
+
+```dotenv
+CAPTCHAVEL_FAKE=true
+```
+
+Then, you can fake a low-score response by adding an `is_robot` a checkbox, respectively.
 
 ```blade
-<!-- This form will be submittable even if the token hasn't been retrieved yet --> 
-<form action="/login" method="post" data-recaptcha="true" data-recaptcha-dont-prevent="true">
-    <!-- ... -->
+<form id='login' method="POST">
+  <input type="email" name="email">
+  <input type="password" name="password">
+  <input type="checkbox" name="is_robot" checked>
+  <button class="g-recaptcha" data-sitekey="{{ captchavel('invisible') }}" data-callback='onSubmit'>Login</button>
+  <br/>
 </form>
 ```
 
-#### Token resolved helper
+## Frontend integration
 
-When the reCAPTCHA token is being retrieved for the form, the form will have the property `recaptcha_unresolved` set to `true`. You can use this property for your other scripts to conditionally allow submission or whatever.
+[Check the official reCAPTCHA documentation](https://developers.google.com/recaptcha/intro) to integrate the reCAPTCHA script in your frontend, or inside your Android application.
 
-```javascript
-if (form.recaptcha_unresolved) {
-    alert('Wait until reCAPTCHA sends the token!');
-} else {
-    form.submit();
-}
-```
+You can use the `captchavel()` helper to output the site key depending on the challenge version you want to render: `checkbox`,  `invisible`, `android` or `score` (v3).
 
-### Backend
-
-After that, you should add the `recaptcha` middleware inside your controllers that will receive input and you want to *protect* with the reCAPTCHA check.
-
-You can use the `isHuman()` and `isRobot()` methods in the Request instance to check if the request was made by a human or a robot, respectively.
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
-
-class CustomController extends Controller
-{
-    /**
-     * Create a new CustomController instance
-     *  
-     * @return void 
-     */
-    public function __construct()
-    {
-        $this->middleware('recaptcha')->only('form');
-    }
-    
-    /**
-     * Receive the HTTP POST Request
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-    public function form(Request $request)
-    {
-        $request->validate([
-            'username' => 'required|string|exists:users,username'
-        ]);
-        
-        if ($request->isRobot()) {
-            return response()->view('web.user.pending_approval');
-        }
-        
-        return response()->view('web.user.success');
-        
-    }
-}
-```
-
-Since it's a middleware, you can alternatively set it inside your route declaration: 
-
-```php
-<?php
-
-use Illuminate\Support\Facades\Route;
-
-Route::post('form')->uses('CustomController@form')->middleware('recaptcha');
-```
-
-> The `recaptcha` middleware only works on `POST/PUT/PATCH/DELETE` methods, so don't worry if you use it in a `GET` method. You will receive a nice `InvalidMethodException` so you can use it correctly.
-
-### Accessing the reCAPTCHA response
-
-You can access the reCAPTCHA response in four ways:
-
-* using [dependency injection](https://laravel.com/docs/container#automatic-injection), 
-* using the `ReCaptcha` facade anywhere in your code, 
-* the `recaptcha()` helper, 
-* and resolving it from the Service Container with `app('recaptha')`. 
-
-These methods will return the reCAPTCHA Response from the servers, with useful helpers so you don't have to dig in the raw response:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
-use DarkGhostHunter\Captchavel\ReCaptcha;
-
-class CustomController extends Controller
-{
-    /**
-     * Create a new CustomController instance
-     *  
-     * @return void 
-     */
-    public function __construct()
-    {
-        $this->middleware('recaptcha')->only('form');
-    }
-    
-    /**
-     * Receive the HTTP POST Request
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @param \DarkGhostHunter\Captchavel\ReCaptcha $reCaptcha
-     * @return \Illuminate\Http\Response
-     * @throws \DarkGhostHunter\Captchavel\Exceptions\RecaptchaNotResolvedException
-     */
-    public function form(Request $request, ReCaptcha $reCaptcha)
-    {
-        $request->validate([
-            'username' => 'required|string|exists:users,username'
-        ]);
-        
-        if ($reCaptcha->isRobot()) {
-            return response()->view('web.user.you-are-a-robot');
-        }
-        
-        return response()->view('web.user.success');
-    }
-    
-    // ...
-}
-```
-
-The class has handy methods you can use to check the status of the reCAPTCHA information:
-
-* `isResolved()`: Returns if the reCAPTCHA check was made in the current Request
-* `isHuman()`: Detects if the Request has been made by a Human (equal or above threshold).
-* `isRobot()`: Detects if the Request has been made by a Robot (below threshold).
-* `since()`: Returns the time the reCAPTCHA challenge was resolved as a Carbon timestamp.
-
-> If you try to check if the response while the reCAPTCHA wasn't resolved, you will get a `RecaptchaNotResolvedException`.
-
-## Local development and robot requests 
-
-When developing, this package registers a transparent middleware that allows you to work on your application without contacting reCAPTCHA servers ever. Instead, it will always generate a successful "dummy" response with a `1.0` score.
-
-You can override the score to an absolute `0.0` in two ways:
-
-* appending the `is_robot` key to the Request query,
-
-```http request
-POST http://myapp.com/login?is_robot
-```
-
-* or adding a checkbox with the name `is_robot` checked.
-
-```html
-<form action="http://myapp.com/login" method="post" data-recaptcha="true">
-    <!-- ... -->
-    
-    <input id="is_robot" type="checkbox" name="is_robot" checked>
-    <label for="is_robot">Filled by a robot</label>
-    
-    <button type="submit">Login</button>
+```blade
+<form id='login' method="POST">
+  <input type="email" name="email">
+  <input type="password" name="password">
+  
+  <button class="g-recaptcha" data-sitekey="{{ captchavel('invisible') }}" data-callback='onSubmit'>Login</button>
+  <br/>
 </form>
 ```
 
-If you want to connect to the reCAPTCHA servers on `local` environment, you can set the `CAPTCHAVEL_LOCAL=true` in your `.env` file.
+> You can also retrieve the key using `android` for Android apps.
 
-> The transparent middleware also registers itself on testing environment, so you can test your application using requests made by a robot and made by a human just adding an empty `_recaptcha` input. Sweet!
+## Advanced configuration
 
-## Configuration
-
-For finner configuration, publish the configuration file for Captchavel:
+Captchavel is intended to work out-of-the-box, but you can publish the configuration file for fine-tuning and additional reCAPTCHA verification.
 
 ```bash
 php artisan vendor:publish --provider="DarkGhostHunter\Captchavel\CaptchavelServiceProvider"
@@ -240,215 +184,148 @@ You will get a config file with this array:
 <?php
 
 return [
-    'mode' => env('CAPTCHAVEL_MODE', 'auto'),
-    'enable_local' => env('CAPTCHAVEL_LOCAL', false),
-    'key' => env('RECAPTCHA_V3_KEY'),
-    'secret' => env('RECAPTCHA_V3_SECRET'),
+    'enable' => env('CAPTCHAVEL_ENABLE',  false),
+    'fake' => env('CAPTCHAVEL_FAKE', false),
+    'hostname' => env('RECAPTCHA_HOSTNAME'),
+    'apk_package_name' => env('RECAPTCHA_APK_PACKAGE_NAME'),
     'threshold' => 0.5,
-    'request_method' => null,
+    'credentials' => [
+        // ...
+    ]
 ];
-```
+``` 
 
-### Mode
-
-Captchavel works painlessly once installed. You can modify the behaviour with just changing the `CAPTCHAVEL_MODE` to `auto` or `manual`, since the config file just picks up the environment file values.
+### Enable Switch
 
 ```dotenv
-CAPTCHAVEL_MODE=auto
+CAPTCHAVEL_ENABLE=true
 ```
 
-#### `auto`
+The main switch to enable or disable Captchavel middleware. This can be handy to enable on some local environments to check real interaction using the included localhost test keys.
 
-The `auto` option leverages the frontend work from you. Just add the `data-recaptcha="true"` attribute to the forms where you want to check for reCAPTCHA.
+When switched off, the `g-recaptcha-response` won't be validated in the Request input, so you can safely disregard any frontend script or reCAPTCHA tokens or boxes.
 
-```blade
-<form action="/login" method="post" data-recaptcha="true">
-    @csrf
-    <input type="text" class="form-control" name="username" placeholder="Username">
-    <input type="password" class="form-control" name="password" placeholder="Password">
-    <button type="submit" class="btn btn-primary">Log in</button>
-</form>
+### Fake responses
+
+```dotenv
+CAPTCHAVEL_FAKE=true
 ```
 
-Captchavel will inject the Google reCAPTCHA v3 as a deferred script before `<head>` tag, in every response (except JSON, AJAX or anything non-HTML), so it can have more analytics about how users interact with your site.
+Setting this to true will allow your application to [fake v3-score responses from reCAPTCHA servers](#faking-robot-and-human-scores).
 
-To override the script that gets injected, take a look in the [editing the script view](#editing-the-script-view) section.
+> This is automatically set to `true` when [running unit tests](#testing-with-captchavel).
 
-#### `manual`
+### Hostname and APK Package Name
 
-This will disable the global middleware that injects the Google reCAPTCHA script in your frontend. You should check out the [Google reCAPTCHA documentation](https://developers.google.com/recaptcha/docs/v3) on how to implement it yourself.
-
-Since the frontend won't have nothing injected, this mode it gives you freedom to:
-
-* manually include the `recaptcha-inject` middleware only in the routes you want,
-* or include the `recaptcha::script` blade template in your layouts you want. 
-
-> The manual mode is very handy if your responses have a lot of data and want better performance, because the middleware won't look into the responses.
-
-### Enable on Local Environment
-
-By default, this package is transparent on `local`  and `testing` environments, so you can develop without requiring to use reCAPTCHA anywhere.
-
-For troubleshooting, you can forcefully enable Captchavel setting `enable_local` to `true`, or better, using your environment `.env` file and setting `CAPTCHAVEL_LOCAL` to `true`.
-
-```php
-<?php
-
-return [
-    'enable_local' => env('CAPTCHAVEL_LOCAL', false),
-];
+```dotenv
+RECAPTCHA_HOSTNAME=myapp.com
+RECAPTCHA_APK_PACKAGE_NAME=my.package.name
 ```
 
-### Key and Secret
+If you are not verifying the Hostname or APK Package Name in your [reCAPTCHA Admin Panel](https://www.google.com/recaptcha/admin/), you will have to issue the strings in the environment file. 
 
-These parameters are self-explanatory. One is the reCAPTCHA Site Key, which is shown publicly in your views, and the Secret, which is used to recover the user interaction information privately inside your application.
-
-If you don't have them, use the [Google reCAPTCHA Admin console](https://g.co/recaptcha/admin) to create a pair. 
+When the reCAPTCHA response from the servers is retrieved, it will be checked against these values. In case of mismatch, a validation exception will be thrown.
 
 ### Threshold
 
-Google reCAPTCHA v3 returns a *score* for interactions. Lower scores means the Request has been probably made by a robot, while high scores mean a more human-like interaction.
-
-By default, this package uses a score of 0.5, which is considered *sane* in most of cases, but you can override it using the`CAPTCHAVEL_THRESHOLD` key with float values between 0.1 and 1.0.
- 
-```dotenv
-CAPTCHAVEL_THRESHOLD=0.7
-```
-
-Aside from that, you can also override the score using a parameter within the `recaptha` middleware, which will take precedence over the default score (set or not). For example, you can set it lower for comments, but higher for product reviews.
-
 ```php
-<?php
-
-use Illuminate\Support\Facades\Route;
-
-Route::post('{product}/comments')
-    ->uses('Product/CommentController@create')
-    ->middleware('recaptcha:0.3');
-
-Route::post('{product}/review')
-    ->uses('Product/ReviewController@create')
-    ->middleware('recaptcha:0.8');
-```
-
-### Request Method
-
-The Google reCAPTCHA library underneath allows to make the request to the reCAPTCHA servers using a custom "Request Method". The `request_method` key accepts the Class you want to instance.
-
-The default `null` value is enough for any normal application, but you're free to, for example, create your own logic or use the classes included in the [ReCaptcha package](https://github.com/google/recaptcha/tree/master/src/ReCaptcha/RequestMethod) (that this package requires). 
-
-```php
-<?php
-
 return [
-    
-    // ...
-    
-    'request_method' => 'App\Http\ReCaptcha\GuzzleRequestMethod',
+    'threshold' => 0.4
 ];
 ```
 
-You can mimic this next example were we will use Guzzle.
+Default threshold to check against reCAPTCHA v3 challenges. Values **equal or above** will be considered as human.
 
-#### Example implementation
+If you're not using reCAPTCHA v3, or you're fine with the default, leave this alone.
 
-First, we will create our `GuzzleRequestMethod` with the `submit()` method as required. This method will return the reCAPTCHA response from the external server using the Guzzle Client.
+### Credentials
 
-`app\Http\ReCaptcha\GuzzleRequestMethod.php`
 ```php
-<?php
-namespace App\Http\ReCaptcha;
-
-use ReCaptcha\RequestMethod;
-use ReCaptcha\RequestParameters;
-
-class GuzzleRequestMethod implements RequestMethod
-{
-    // ...
-    
-    /**
-     * Submit the request with the specified parameters.
-     *
-     * @param RequestParameters $params     Request parameters
-     * @return string                       Body of the reCAPTCHA response
-     */
-    public function submit(RequestParameters $params) 
-    {
-        return (new \GuzzleHttp\Client)->post($params->toQueryString())
-            ->getBody()
-            ->getContents();
-    }
-}
-```
-
-Then, we will add the class to the `request_method` key in our configuration:
-
-`config/captchavel.php`
-```php
-<?php
-
 return [
-    
-    // ...
-    
-    'request_method' => 'App\Http\ReCaptcha\GuzzleRequestMethod',
-];
-```
-
-Finally, we will tell the Service Container to give our `GuzzleRequestMethod` to the underneath `ReCaptcha` class when Captchavel tries to instance it, using the Service Container [Contextual Binding](https://laravel.com/docs/container#contextual-binding).
-
-`app\Providers\AppServiceProvider.php`
-```php
-<?php
-namespace App\Providers;
-
-use Illuminate\Support\ServiceProvider;
-use App\Http\ReCaptcha\GuzzleRequestMethod;
-use ReCaptcha\ReCaptcha;
-use ReCaptcha\RequestMethod;
-
-class AppServiceProvider extends ServiceProvider
-{
-    // ...
-
-    /**
-     * Register any application services.
-     *
-     * @return void
-     */
-    public function register()
-    {
+    'credentials' => [
         // ...
+    ]
+];
+```
+
+Here is the full array of [reCAPTCHA credentials](#set-up) to use depending on the version. Do not change the array unless you know what you're doing.
+
+## Testing with Captchavel
+
+When testing your application, you may want to mock the reCAPTCHA responses from the servers. There is no need to the whole client, you can use the `fake()` method of the `Captchavel` facade.
+
+> When mocking requests, there is no need to add any reCAPTCHA token to your tests.
+
+Since you will have access to the Response to check if it was made by a robot or a human, simply use the `asHuman()` and `asRobot()` methods to score `1.0` or `0.0`, respectively.
+
+```php
+<?php
+use DarkGhostHunter\Captchavel\Facades\Captchavel;
+
+// Let the user login normally.
+Captchavel::fake()->asHuman();
+
+$this->post('login', [
+    'email' => 'test@test.com',
+    'password' => '123456',
+])->assertRedirect('user.welcome');
+
+// Let the user login using 2FA.
+Captchavel::fake()->asRobot();
+
+$this->post('login', [
+    'email' => 'test@test.com',
+    'password' => '123456',
+])->assertViewIs('login.2fa');
+```
+
+Alternatively, `shouldScore()` method that will fake the score for anything you set.
+
+### Events
+
+When a reCAPTCHA challenge is resolved, whatever result is received, the `ReCaptchaResponseReceived` event fires with the HTTP Request instance and the reCAPTCHA response.
+
+### Using your own reCAPTCHA middleware
+
+You may want to create your own reCAPTCHA middleware. Instead of doing one from scratch, you can extend the `BaseReCaptchaMiddleware`.
+
+```php
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use DarkGhostHunter\Captchavel\Http\Middleware\BaseReCaptchaMiddleware;
+
+class MyReCaptchaMiddleware extends BaseReCaptchaMiddleware
+{
+    /**
+     * Handle the incoming request.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @param  \Closure $next
+     * @return mixed
+     */
+    public function handle($request, Closure $next)
+    {
+        $input = 'g-recaptcha-response';
         
-        // Tell the Service Container to pass our custom Request Method to the ReCaptcha client 
-        $this->app->when(ReCaptcha::class)
-            ->needs(RequestMethod::class)
-            ->give(function () {
-                return new GuzzleRequestMethod;
-            });
+        $this->validateRequest($request, $input);
+
+        $response = $this->retrieve($request, $input, 2, 'checkbox');
+
+        if ($response->isInvalid()) {
+            throw $this->validationException($input, 'Complete the reCAPTCHA challenge');
+        }
+
+        return $next($request);
     }
 }
 ```
 
-We're leaving the Contextual Binding to you, since your *requester* may need some logic that a simple `app()->make(MyRequester::class)` may not be sufficient.
+## Security
 
-### Editing the Script view
-
-You can edit the script Blade view under by just creating a Blade template in `resources/vendor/captchavel/script.blade.php`.
-
-This blade view contains the reCAPTCHA script of the package. The view receives the `$key` variable witch is just the reCAPTCHA v3 Site Key. 
-
-There you can edit how the script is downloaded from Google, and how it checks for forms to link with the backend, if the default script isn't enough for you. 
-
-### AJAX Requests
-
-Depending on the application, AJAX Requests won't include the reCAPTCHA token. This may be for various reasons:
-
-* Using virtual DOM frameworks like Vue and React.
-* Creating a form after the page loaded with JavaScript.
-* An AJAX Requests being done entirely in JavaScript.
-
-In any of these scenarios, you may want disable the injection script and [use the reCAPATCHA v3 scripts directly](https://developers.google.com/recaptcha/docs/v3) or your [custom script](#editing-the-script-view).
+If you discover any security related issues, please email darkghosthunter@gmail.com instead of using the issue tracker.
 
 ## License
 

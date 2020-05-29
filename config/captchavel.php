@@ -1,55 +1,57 @@
 <?php
 
+use DarkGhostHunter\Captchavel\Captchavel;
+
 return [
 
     /*
     |--------------------------------------------------------------------------
-    | Mode
+    | Main switch
     |--------------------------------------------------------------------------
     |
-    | Captchavel works without needing any specific configuration in your view.
-    | You can set the mode to "manual" to disable any response modification,
-    | letting you have total control about the frontend with the scripts.
+    | This switch enables the main Captchavel middleware that will detect all
+    | challenges incoming. You should activate it on production environments
+    | and deactivate it on local environments unless you to test responses.
     |
     */
 
-    'mode' => env('CAPTCHAVEL_MODE', 'auto'),
+    'enable' => env('CAPTCHAVEL_ENABLE', false),
 
     /*
     |--------------------------------------------------------------------------
-    | Enable on Local Environment
+    | Fake on local development
     |--------------------------------------------------------------------------
     |
-    | Having reCAPTCHA on local environment is usually not a good idea unless
-    | you want to make some manual-human tests. For these moments, you can
-    | enable reCAPTCHA setting this to true until you are sure it works.
+    | Sometimes you may want to fake success or failed responses from reCAPTCHA
+    | servers in local development. To do this, simply enable the environment
+    | variable and then issue as a checkbox parameter is_robot to any form.
     |
     */
 
-    'enable_local' => env('CAPTCHAVEL_LOCAL', false),
+    'fake' => env('CAPTCHAVEL_FAKE', false),
 
     /*
     |--------------------------------------------------------------------------
-    | Site Key and Secret
+    | Constraints
     |--------------------------------------------------------------------------
     |
-    | Google reCAPTCHA issues two keys: a Site Key to show in your responses,
-    | and a Secret you should hold privately, since this Secret checks the
-    | reCAPTCHA behaviour. Check the reCAPTCHA Admin panel to make them.
+    | These default constraints allows further verification of the incoming
+    | response from reCAPTCHA servers. Hostname and APK Package Name are
+    | required if these are not verified in your reCAPTCHA admin panel.
     |
     */
 
-    'key' => env('RECAPTCHA_V3_KEY'),
-    'secret' => env('RECAPTCHA_V3_SECRET'),
+    'hostname'         => env('RECAPTCHA_HOSTNAME'),
+    'apk_package_name' => env('RECAPTCHA_APK_PACKAGE_NAME'),
 
     /*
     |--------------------------------------------------------------------------
     | Threshold
     |--------------------------------------------------------------------------
     |
-    | The response from reCAPTCHA contains a score of interactivity. You can
-    | set the default threshold number to differentiate between humans and
-    | robots, so you can make actions depending on who made the Request.
+    | For reCAPTCHA v3, which is an score-driven interaction, this default
+    | threshold is the slicing point between bots and humans. If a score
+    | is below this threshold, it means the request was made by a bot.
     |
     */
 
@@ -57,14 +59,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Request Method
+    | Credenctials
     |--------------------------------------------------------------------------
     |
-    | The underlying Google reCAPTCHA library for PHP admits a custom Request
-    | Method for your application. That means, you can delegate an specific
-    | class to handle how to send and to receive the reCaptcha response.
+    | The following is the array of credentials for each version and variant
+    | of the reCAPTCHA services. You shouldn't need to edit this unless you
+    | know what you're doing. On reCAPTCHA v2, it comes with testing keys.
     |
     */
 
-    'request_method' => null,
+    'credentials' => [
+        'v2' => [
+            'checkbox'  => [
+                'secret' => env('RECAPTCHA_V2_CHECKBOX_SECRET', Captchavel::TEST_V2_SECRET),
+                'key'    => env('RECAPTCHA_V2_CHECKBOX_KEY', Captchavel::TEST_V2_KEY),
+            ],
+            'invisible' => [
+                'secret' => env('RECAPTCHA_V2_INVISIBLE_SECRET', Captchavel::TEST_V2_SECRET),
+                'key'    => env('RECAPTCHA_V2_INVISIBLE_KEY', Captchavel::TEST_V2_KEY),
+            ],
+            'android'   => [
+                'secret' => env('RECAPTCHA_V2_ANDROID_SECRET', Captchavel::TEST_V2_SECRET),
+                'key'    => env('RECAPTCHA_V2_ANDROID_KEY', Captchavel::TEST_V2_KEY),
+            ],
+        ],
+        'v3' => [
+            'secret' => env('RECAPTCHA_V3_SECRET'),
+            'key'    => env('RECAPTCHA_V3_KEY'),
+        ],
+    ],
 ];
