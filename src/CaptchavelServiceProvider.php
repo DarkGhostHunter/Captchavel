@@ -2,6 +2,7 @@
 
 namespace DarkGhostHunter\Captchavel;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Config\Repository;
@@ -43,5 +44,8 @@ class CaptchavelServiceProvider extends ServiceProvider
 
         $router->aliasMiddleware('recaptcha.v2', VerifyReCaptchaV2::class);
         $router->aliasMiddleware('recaptcha.v3', VerifyReCaptchaV3::class);
+
+        Request::macro('isRobot', [RequestMacro::class, 'isRobot']);
+        Request::macro('isHuman', [RequestMacro::class, 'isHuman']);
     }
 }

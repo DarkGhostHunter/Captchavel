@@ -250,7 +250,7 @@ Here is the full array of [reCAPTCHA credentials](#set-up) to use depending on t
 
 ## Testing with Captchavel
 
-When unit testing your application, this package [automatically fakes reCAPTCHA responses](#fake-responses) by setting.
+When unit testing your application, this package [automatically fakes reCAPTCHA responses](#fake-responses).
 
 > When mocking requests, there is no need to add any reCAPTCHA token or secrets in your tests.
 
@@ -280,7 +280,7 @@ $this->post('login', [
 
 Alternatively, `fakeScore()` method that will fake any score you set.
 
-> Fake responses don't come with action, hostnames or APK package names.
+> Fake responses don't come with actions, hostnames or APK package names.
 
 ### Events
 

@@ -5,9 +5,12 @@ namespace Tests\Http\Middleware;
 use Tests\RegistersPackage;
 use Illuminate\Http\Request;
 use Orchestra\Testbench\TestCase;
+use Illuminate\Http\Client\Factory;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Event;
 use DarkGhostHunter\Captchavel\Captchavel;
+use GuzzleHttp\Psr7\Response as GuzzleResponse;
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
 use DarkGhostHunter\Captchavel\Events\ReCaptchaResponseReceived;
 
@@ -50,11 +53,11 @@ class ScoreMiddlewareTest extends TestCase
             ->andReturnSelf();
         $mock->shouldReceive('retrieve')
             ->with('token', '127.0.0.1')
-                ->andReturn(new ReCaptchaResponse([
-                    'success' => true,
-                    'score' => 0.5,
-                    'foo' => 'bar'
-                ]));
+            ->andReturn(new ReCaptchaResponse([
+                'success' => true,
+                'score' => 0.5,
+                'foo' => 'bar'
+            ]));
 
         $this->post('v3/default', [
             Captchavel::INPUT => 'token'
@@ -483,5 +486,48 @@ class ScoreMiddlewareTest extends TestCase
         $this->postJson('test', [
             Captchavel::INPUT => 'token'
         ])->assertJsonValidationErrors('action');
+    }
+
+    public function test_checks_for_human_score()
+    {
+        config(['captchavel.credentials.v3.secret' => 'secret']);
+        config(['captchavel.fake' => false]);
+
+        $mock = $this->mock(Factory::class);
+
+        $mock->shouldReceive('asForm')->withNoArgs()->times(4)->andReturnSelf();
+        $mock->shouldReceive('withOptions')->with(['version' => 2.0])->times(4)->andReturnSelf();
+        $mock->shouldReceive('post')
+            ->with(Captchavel::RECAPTCHA_ENDPOINT, [
+                'secret'   => 'secret',
+                'response' => 'token',
+                'remoteip' => '127.0.0.1',
+            ])
+            ->times(4)
+            ->andReturn(new Response(new GuzzleResponse(200, ['Content-type' => 'application/json'], json_encode([
+                'success' => true,
+                'score'   => 0.5,
+            ]))));
+
+        Route::post('human_human', function (Request $request) {
+            return $request->isHuman() ? 'true' : 'false';
+        })->middleware('recaptcha.v3:0.7');
+
+        Route::post('human_robot', function (Request $request) {
+            return $request->isRobot() ? 'true' : 'false';
+        })->middleware('recaptcha.v3:0.7');
+
+        Route::post('robot_human', function (Request $request) {
+            return $request->isHuman() ? 'true' : 'false';
+        })->middleware('recaptcha.v3:0.3');
+
+        Route::post('robot_robot', function (Request $request) {
+            return $request->isRobot() ? 'true' : 'false';
+        })->middleware('recaptcha.v3:0.3');
+
+        $this->post('human_human', [Captchavel::INPUT => 'token'])->assertSee('false');
+        $this->post('human_robot', [Captchavel::INPUT => 'token'])->assertSee('true');
+        $this->post('robot_human', [Captchavel::INPUT => 'token'])->assertSee('true');
+        $this->post('robot_robot', [Captchavel::INPUT => 'token'])->assertSee('false');
     }
 }
