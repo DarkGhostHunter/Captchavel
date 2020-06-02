@@ -52,7 +52,7 @@ class ReCaptchaResponse extends Fluent
             throw new LogicException('This is not a reCAPTCHA v3 response, or the score is absent.');
         }
 
-        return $this->threshold >= $this->score;
+        return $this->score >= $this->threshold;
     }
 
     /**
