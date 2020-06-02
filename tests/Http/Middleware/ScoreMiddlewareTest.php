@@ -31,6 +31,8 @@ class ScoreMiddlewareTest extends TestCase
 
     public function test_bypass_if_not_enabled()
     {
+        config(['captchavel.enable' => false]);
+
         $event = Event::fake();
 
         $this->mock(Captchavel::class)->shouldNotReceive('useCredentials', 'retrieve');
