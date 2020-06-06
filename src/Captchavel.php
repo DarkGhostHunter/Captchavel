@@ -29,7 +29,7 @@ class Captchavel
      *
      * @var string
      */
-    public const RECAPTCHA_ENDPOINT = 'www.google.com/recaptcha/api/siteverify';
+    public const RECAPTCHA_ENDPOINT = 'https://www.google.com/recaptcha/api/siteverify';
 
     /**
      * The name of the input for a reCAPTCHA frontend response.
