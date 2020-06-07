@@ -34,7 +34,7 @@ class CaptchavelServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/config.php' => config_path('captchavel.php'),
+                __DIR__.'/../config/captchavel.php' => config_path('captchavel.php'),
             ], 'config');
 
             if ($this->app->runningUnitTests()) {
