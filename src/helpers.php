@@ -18,6 +18,6 @@ if (! function_exists('captchavel')) {
             return $key;
         }
 
-        throw new LogicException("The reCAPTCHA site key for [$credentials] doesn't exists.");
+        throw new LogicException("The reCAPTCHA site key for [$credentials] doesn't exist.");
     }
 }
