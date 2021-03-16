@@ -13,7 +13,7 @@ class HelperTest extends TestCase
     public function test_exception_when_no_v3_key_loaded()
     {
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('The reCAPTCHA site key for [3] doesn\'t exists.');
+        $this->expectExceptionMessage('The reCAPTCHA site key for [3] doesn\'t exist.');
 
         captchavel(3);
     }
