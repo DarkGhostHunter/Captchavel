@@ -2,9 +2,9 @@
 
 namespace DarkGhostHunter\Captchavel\Facades;
 
-use Illuminate\Support\Facades\Facade;
-use DarkGhostHunter\Captchavel\CaptchavelFake;
 use DarkGhostHunter\Captchavel\Captchavel as BaseCaptchavel;
+use DarkGhostHunter\Captchavel\CaptchavelFake;
+use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static \DarkGhostHunter\Captchavel\Captchavel getFacadeRoot()
@@ -26,7 +26,7 @@ class Captchavel extends Facade
      *
      * @return \DarkGhostHunter\Captchavel\CaptchavelFake
      */
-    protected static function fake()
+    public static function fake()
     {
         if (static::$resolvedInstance instanceof CaptchavelFake) {
             return static::$resolvedInstance;
