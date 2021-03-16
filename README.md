@@ -26,7 +26,10 @@ It uses your Laravel HTTP Client and **HTTP/2**, making your app **fast**. You o
 
 ## Requirements
 
-* Laravel 7.x
+* Laravel 8.x
+* PHP 8.0
+
+> If you need support for old versions, consider sponsoring or donating.
 
 ## Installation
 
