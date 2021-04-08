@@ -20,11 +20,18 @@
         "php": "^8.0",
         "ext-json": "*",
         "illuminate/support": "^8.0",
+        "illuminate/http": "^8.0",
+        "illuminate/routing": "^8.0",
+        "illuminate/container": "^8.0",
+        "illuminate/events": "^8.0",
         "guzzlehttp/guzzle": "^7.0"
     },
     "require-dev": {
         "orchestra/testbench": "^6.14.0",
         "phpunit/phpunit": "^9.5.2"
+    },
+    "conflict": {
+        "laravel/octane": "*"
     },
     "autoload": {
         "psr-4": {
