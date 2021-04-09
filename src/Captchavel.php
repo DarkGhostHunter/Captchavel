@@ -2,14 +2,22 @@
 
 namespace DarkGhostHunter\Captchavel;
 
-use LogicException;
+use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
+use Illuminate\Container\Container;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\Response;
-use Illuminate\Contracts\Config\Repository as Config;
-use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
+use LogicException;
+use RuntimeException;
 
 class Captchavel
 {
+    // Constants to identify each reCAPTCHA service.
+    public const CHECKBOX = 'checkbox';
+    public const INVISIBLE = 'invisible';
+    public const ANDROID = 'android';
+    public const SCORE = 'score';
+
     /**
      * reCAPTCHA v2 secret for testing on "localhost".
      *
@@ -39,98 +47,67 @@ class Captchavel
     public const INPUT = 'g-recaptcha-response';
 
     /**
-     * The available reCAPTCHA v2 variants name.
-     *
-     * @var string
-     */
-    public const V2_VARIANTS = [
-        'checkbox', 'invisible', 'android',
-    ];
-
-    /**
      * Laravel HTTP Client factory.
      *
-     * @var \Illuminate\Http\Client\Factory|\Illuminate\Http\Client\PendingRequest
+     * @var \Illuminate\Http\Client\Factory
      */
-    protected $httpFactory;
+    protected Factory $http;
 
     /**
      * Config Repository.
      *
      * @var \Illuminate\Contracts\Config\Repository
      */
-    protected $config;
-
-    /**
-     * Secret to use with given challenge.
-     *
-     * @var string
-     */
-    protected $secret;
-
-    /**
-     * The Captchavel Response created from the reCAPTCHA response.
-     *
-     * @var null|\DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
-     */
-    protected $response;
+    protected Repository $config;
 
     /**
      * Create a new Captchavel instance.
      *
-     * @param  \Illuminate\Http\Client\Factory  $httpFactory
+     * @param  \Illuminate\Http\Client\Factory  $http
      * @param  \Illuminate\Contracts\Config\Repository  $config
      */
-    public function __construct(Factory $httpFactory, Config $config)
+    public function __construct(Factory $http, Repository $config)
     {
-        $this->httpFactory = $httpFactory;
+        $this->http = $http;
         $this->config = $config;
     }
 
     /**
-     * Returns the Captchavel Response, if any.
+     * Resolves a reCAPTCHA challenge.
      *
-     * @return null|\DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
+     * @param  string  $challenge
+     * @param  string  $ip
+     * @param  string  $version
+     *
+     * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
      */
-    public function getResponse()
+    public function getChallenge(string $challenge, string $ip, string $version): ReCaptchaResponse
     {
-        return $this->response;
-    }
+        $response = $this->send($challenge, $ip, $this->useCredentials($version))->setVersion($version)->setAsResolved();
 
-    /**
-     * Check if the a response was resolved from reCAPTCHA servers.
-     *
-     * @return bool
-     */
-    public function isNotResolved()
-    {
-        return $this->response === null;
+        Container::getInstance()->instance(ReCaptchaResponse::class, $response);
+
+        return $response;
     }
 
     /**
      * Sets the correct credentials to use to retrieve the challenge results.
      *
-     * @param  int  $version
-     * @param  string|null  $variant
-     * @return $this
+     * @param  string  $mode
+     *
+     * @return string
      */
-    public function useCredentials(int $version, string $variant = null)
+    protected function useCredentials(string $mode): string
     {
-        if ($version === 2) {
-            if (! in_array($variant, static::V2_VARIANTS, true)) {
-                throw new LogicException("The reCAPTCHA v2 variant must be [checkbox], [invisible] or [android].");
-            }
-            $this->secret = $this->config->get("captchavel.credentials.v2.{$variant}.secret");
-        } elseif ($version === 3) {
-            $this->secret = $this->config->get('captchavel.credentials.v3.secret');
+        if (!in_array($mode, static::getModes())) {
+            throw new LogicException('The reCAPTCHA mode must be: ' . implode(', ', static::getModes()));
         }
 
-        if (! $this->secret) {
-            $name = 'v' . $version . ($variant ? '-' . $variant : '');
-            throw new LogicException("The reCAPTCHA secret for [{$name}] doesn't exists.");
+        if (! $key = $this->config->get("captchavel.credentials.{$mode}.secret")) {
+            throw new RuntimeException("The reCAPTCHA secret for [{$mode}] doesn't exists");
         }
 
-        return $this;
+        return $key;
     }
 
     /**
@@ -138,17 +115,16 @@ class Captchavel
      *
      * @param  string  $challenge
      * @param  string  $ip
+     * @param  string  $secret
+     *
      * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
      */
-    public function retrieve(string $challenge, string $ip)
+    protected function send(string $challenge, string $ip, string $secret): ReCaptchaResponse
     {
-        $response = $this->httpFactory->asForm()
+        $response = $this->http
+            ->asForm()
             ->withOptions(['version' => 2.0])
-            ->post(static::RECAPTCHA_ENDPOINT, [
-                'secret'   => $this->secret,
-                'response' => $challenge,
-                'remoteip' => $ip,
-            ]);
+            ->post(static::RECAPTCHA_ENDPOINT, ['secret' => $secret, 'response' => $challenge, 'remoteip' => $ip]);
 
         return $this->parse($response);
     }
@@ -157,10 +133,21 @@ class Captchavel
      * Parses the Response
      *
      * @param  \Illuminate\Http\Client\Response  $response
+     *
      * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
      */
-    protected function parse(Response $response)
+    protected function parse(Response $response): ReCaptchaResponse
     {
-        return $this->response = new ReCaptchaResponse($response->json());
+        return new ReCaptchaResponse($response->json());
+    }
+
+    /**
+     * Checks if the mode is a valid mode name.
+     *
+     * @return array|string[]
+     */
+    protected static function getModes(): array
+    {
+        return [static::CHECKBOX, static::INVISIBLE, static::ANDROID, static::SCORE];
     }
 }

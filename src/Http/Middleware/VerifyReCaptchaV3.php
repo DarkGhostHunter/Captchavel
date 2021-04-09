@@ -4,7 +4,11 @@ namespace DarkGhostHunter\Captchavel\Http\Middleware;
 
 use Closure;
 use DarkGhostHunter\Captchavel\Captchavel;
+use DarkGhostHunter\Captchavel\CaptchavelFake;
+use DarkGhostHunter\Captchavel\Facades\Captchavel as CaptchavelFacade;
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
+use Illuminate\Container\Container;
+use Illuminate\Http\Request;
 
 class VerifyReCaptchaV3 extends BaseReCaptchaMiddleware
 {
@@ -16,19 +20,24 @@ class VerifyReCaptchaV3 extends BaseReCaptchaMiddleware
      * @param  string|null  $threshold
      * @param  string|null  $action
      * @param  string  $input
+     *
      * @return mixed
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function handle($request, Closure $next, $threshold = null, $action = null, $input = Captchavel::INPUT)
+    public function handle(Request $request,
+        Closure $next,
+        string $threshold = null,
+        string $action = null,
+        string $input = Captchavel::INPUT
+    )
     {
         if ($this->isEnabled()) {
             if ($this->isReal()) {
                 $this->validateRequest($request, $input);
             } else {
+                $this->ensureFakeCaptchavel();
                 $this->fakeResponseScore($request);
-
-                // We will disable the action name since it will be verified if we don't null it.
-                $action = null;
+                $this->prepareRequestForFaking($request, $input);
             }
 
             $this->processChallenge($request, $threshold, $action, $input);
@@ -38,37 +47,61 @@ class VerifyReCaptchaV3 extends BaseReCaptchaMiddleware
     }
 
     /**
+     * Ensure we're using Captchavel Fake.
+     *
+     * @return void
+     */
+    protected function ensureFakeCaptchavel(): void
+    {
+        if (! $this->captchavel instanceof CaptchavelFake) {
+            $this->captchavel = CaptchavelFacade::fake();
+        }
+    }
+
+    /**
+     * Prepare the Request to with a fake challenge input.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $input
+     */
+    protected function prepareRequestForFaking(Request $request, string $input)
+    {
+        if ($request->missing($input)) {
+            $request->merge([$input => 'fake_challenge_input']);
+        }
+    }
+
+    /**
      * Process the response from reCAPTCHA servers.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  null|string  $threshold
      * @param  null|string  $action
      * @param  string  $input
+     *
      * @throws \Illuminate\Validation\ValidationException
      */
-    protected function processChallenge($request, $threshold, $action, $input)
+    protected function processChallenge(Request $request, ?string $threshold, ?string $action, string $input)
     {
-        $response = $this->retrieve($request, $input, 3);
-
-        $response->setThreshold($this->normalizeThreshold($threshold));
-
-        $this->dispatch($request, $response);
+        $response = $this->retrieveChallenge($request, $input, Captchavel::SCORE)
+            ->setThreshold($this->normalizeThreshold($threshold));
 
         $this->validateResponse($response, $input, $this->normalizeAction($action));
 
-        // After we get the response, we will register the instance as a shared ("singleton").
-        // Obviously we will set the threshold set by the developer or just use the default.
-        // The Response should not be available until the middleware runs, so this is ok.
-        app()->instance(ReCaptchaResponse::class, $response);
+        // After we get the response, we will register the instance as a shared
+        // "singleton" for the current request lifetime. Obviously we will set
+        // the threshold set by the developer or just use the config default.
+        Container::getInstance()->instance(ReCaptchaResponse::class, $response);
     }
 
     /**
      * Normalize the threshold string.
      *
-     * @param string|null $threshold
-     * @return array|float|mixed
+     * @param  string|null  $threshold
+     *
+     * @return float
      */
-    protected function normalizeThreshold($threshold)
+    protected function normalizeThreshold(?string $threshold): float
     {
         return $threshold === 'null' ? $this->config->get('captchavel.threshold') : (float)$threshold;
     }
@@ -77,9 +110,10 @@ class VerifyReCaptchaV3 extends BaseReCaptchaMiddleware
      * Normalizes the action name, or returns null.
      *
      * @param  null|string  $action
+     *
      * @return null|string
      */
-    protected function normalizeAction($action)
+    protected function normalizeAction(?string $action) : ?string
     {
         return strtolower($action) === 'null' ? null : $action;
     }

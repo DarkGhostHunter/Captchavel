@@ -7,76 +7,64 @@ use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
 class CaptchavelFake extends Captchavel
 {
     /**
-     * Sets a fake response.
+     * Score to fake
      *
-     * @param  \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse  $response
-     * @return $this
+     * @var float|null
      */
-    public function setResponse(ReCaptchaResponse $response)
-    {
-        $this->response = $response;
-
-        return $this;
-    }
+    public ?float $score = null;
 
     /**
-     * Sets the correct credentials to use to retrieve the challenge results.
-     *
-     * @param  int  $version
-     * @param  string|null  $variant
-     * @return $this
-     */
-    public function useCredentials(int $version, string $variant = null)
-    {
-        return $this;
-    }
-
-    /**
-     * Retrieves the Response Challenge.
+     * Resolves a reCAPTCHA challenge.
      *
      * @param  string  $challenge
      * @param  string  $ip
+     * @param  string|null  $version
+     *
      * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
      */
-    public function retrieve(?string $challenge, string $ip)
+    public function getChallenge(string $challenge, string $ip, string $version = null): ReCaptchaResponse
     {
-        return $this->response;
+        return (new ReCaptchaResponse(
+            [
+                'success' => true,
+                'action' => null,
+                'hostname' => null,
+                'apk_package_name' => null,
+                'challenge_ts' => now()->toAtomString(),
+                'score' => $this->score,
+            ]
+        ))->setVersion(Captchavel::SCORE)->setAsResolved();
     }
 
     /**
-     * Makes the fake Captchavel response with a fake score.
+     * Adds a fake score to return as a reCAPTCHA response.
      *
-     * @param  float $score
-     * @return $this
+     * @param  float  $score
+     *
+     * @return void
      */
-    public function fakeScore(float $score)
+    public function fakeScore(float $score): void
     {
-        return $this->setResponse(new ReCaptchaResponse([
-            'success' => true,
-            'score' => $score,
-            'action' => null,
-            'hostname' => null,
-            'apk_package_name' => null,
-        ]));
+        $this->score = $score;
     }
 
     /**
      * Makes a fake Captchavel response made by a robot with "0" score.
      *
-     * @return $this
+     * @return void
      */
-    public function fakeRobot()
+    public function fakeRobots(): void
     {
-        return $this->fakeScore(0);
+        $this->score = 0;
     }
 
     /**
      * Makes a fake Captchavel response made by a human with "1.0" score.
      *
-     * @return $this
+     * @return void
      */
-    public function fakeHuman()
+    public function fakeHumans(): void
     {
-        return $this->fakeScore(1);
+        $this->score = 1.0;
     }
 }
