@@ -51,7 +51,7 @@ class VerifyReCaptchaV2
      */
     public function handle(Request $request, Closure $next, string $version, string $input = Captchavel::INPUT)
     {
-        if ($this->isEnabled()) {
+        if ($this->isEnabled() && !$this->isFake()) {
             $this->validateRequest($request, $input);
             $this->validateResponse(
                 $this->captchavel->getChallenge($request->input($input), $request->ip(), $version),

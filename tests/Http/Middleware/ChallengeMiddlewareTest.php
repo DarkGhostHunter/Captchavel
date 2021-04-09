@@ -51,6 +51,18 @@ class ChallengeMiddlewareTest extends TestCase
         $this->post('v2/invisible')->assertOk();
         $this->post('v2/android')->assertOk();
     }
+    public function test_success_when_enabled_and_fake()
+    {
+        config(['captchavel.enable' => true]);
+        config(['captchavel.fake' => true]);
+
+        $this->post('v2/checkbox')->assertOk();
+        $this->post('v2/checkbox/input_bar')->assertOk();
+        $this->post('v2/invisible')->assertOk();
+        $this->post('v2/invisible/input_bar')->assertOk();
+        $this->post('v2/android')->assertOk();
+        $this->post('v2/android/input_bar')->assertOk();
+    }
 
     public function test_success_when_disabled()
     {

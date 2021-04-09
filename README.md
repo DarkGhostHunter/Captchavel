@@ -14,7 +14,6 @@ It uses your Laravel HTTP Client and **HTTP/2**, making your app **fast**. You o
 * [Installation](#installation)
 * [Set Up](#set-up)
 * [Usage](#usage)
-  - [Score driven interaction](#score-driven-interaction)
 * [Frontend integration](#frontend-integration)
 * [Advanced configuration](#advanced-configuration)
 * [Testing with Captchavel](#testing-with-captchavel)
@@ -38,22 +37,22 @@ composer require darkghosthunter/captchavel
 
 ## Set up
 
-Add the reCAPTCHA keys for your site to the environment file of your project. You can add each of them for reCAPTCHA v2 **checkbox**, **invisible**, **Android**, and **v3** (score).
+Add the reCAPTCHA keys for your site to the environment file of your project. You can add each of them for reCAPTCHA v2 **checkbox**, **invisible**, **Android**, and **score**.
 
 If you don't have one, generate it in your [reCAPTCHA Admin panel](https://www.google.com/recaptcha/admin/).
 
 ```dotenv
-RECAPTCHA_V2_CHECKBOX_SECRET=6t5geA1UAAAAAN...
-RECAPTCHA_V2_CHECKBOX_KEY=6t5geA1UAAAAAN...
+RECAPTCHA_CHECKBOX_SECRET=6t5geA1UAAAAAN...
+RECAPTCHA_CHECKBOX_KEY=6t5geA1UAAAAAN...
 
-RECAPTCHA_V2_INVISIBLE_SECRET=6t5geA2UAAAAAN...
-RECAPTCHA_V2_INVISIBLE_KEY=6t5geA2UAAAAAN...
+RECAPTCHA_INVISIBLE_SECRET=6t5geA2UAAAAAN...
+RECAPTCHA_INVISIBLE_KEY=6t5geA2UAAAAAN...
 
-RECAPTCHA_V2_ANDROID_SECRET=6t5geA3UAAAAAN...
-RECAPTCHA_V2_ANDROID_KEY=6t5geA3UAAAAAN...
+RECAPTCHA_ANDROID_SECRET=6t5geA3UAAAAAN...
+RECAPTCHA_ANDROID_KEY=6t5geA3UAAAAAN...
 
-RECAPTCHA_V3_SECRET=6t5geA4UAAAAAN...
-RECAPTCHA_V3_KEY=6t5geA4UAAAAAN...
+RECAPTCHA_SCORE_SECRET=6t5geA4UAAAAAN...
+RECAPTCHA_SCORE_KEY=6t5geA4UAAAAAN...
 ```
 
 This allows you to check different reCAPTCHA mechanisms using the same application, in different environments.
@@ -62,12 +61,15 @@ This allows you to check different reCAPTCHA mechanisms using the same applicati
 
 ## Usage
 
+Usage differs based on if you're using checkbox, invisible, or Android challenges, or the v3 score-driven challenge.
+
+### Checkbox, invisible and Android challenges
+
 After you integrate reCAPTCHA into your frontend or Android app, set the Captchavel middleware in the `POST` routes where a form with reCAPTCHA is submitted. The middleware will catch the `g-recaptcha-response` input and check if it's valid.
 
 * `recaptcha:checkbox` for explicitly rendered checkbox challenges.
 * `recaptcha:invisible` for invisible challenges.
 * `recaptcha:android` for Android app challenges.
-* `recaptcha.score` for [score-driven challenges](#score-driven-interaction).
 
 When the validation fails, the user will be redirected back to the form route, or a JSON response will be returned with the validation errors.
 
@@ -79,9 +81,11 @@ Route::post('login', [LoginController::class, 'login'])->middleware('recaptcha:c
 
 > You can change the input name from `g-recaptcha-response` to a custom using a second parameter, like `recaptcha.checkbox:my_input_name`.
 
-### Score driven interaction
+### Score-driven challenge
 
-The reCAPTCHA v3 middleware works differently from v2. This is a score-driven response is always a success, but the challenge is scored between `0.0` and `1.0`, in which robots will get lower scores than humans. The default threshold is `0.5`, which will set apart robots that score less thant that.
+The reCAPTCHA v3 middleware works differently from v2. This is a score-driven response is _always_ a success, but the challenge is scored between `0.0` and `1.0`. Robots will get lower scores, while human-like interaction will be higher.
+
+The default threshold is `0.5`, which will set apart robots that score less than that.
 
 Simply add the `recaptcha.score` middleware to your route:
 
@@ -256,9 +260,11 @@ return [
 
 Here is the full array of [reCAPTCHA credentials](#set-up) to use depending on the version. Do not change the array unless you know what you're doing.
 
-## Testing with Captchavel
+## Testing Score with Captchavel
 
-When unit testing your application, this package can help you to [automatically fake reCAPTCHA responses](#fake-responses).
+On testing, when Captchavel is disabled, routes set with the v2 middleware won't need to input the challenge in their body as it will be not verified.
+
+On the other hand, reCAPTCHA v3 (score) responses can be [automatically faked](#fake-responses).
 
 To do that, you should [enable Captchavel](#enable-switch) on your tests, through the `.env.testing` environment file, or in [PHPUnit environment section](https://phpunit.readthedocs.io/en/9.5/configuration.html?highlight=environment#the-env-element). If you use another testing framework, refer to its documentation.
 
@@ -272,9 +278,21 @@ To do that, you should [enable Captchavel](#enable-switch) on your tests, throug
 </phpunit>
 ```
 
+Alternatively, you can change the configuration before your unit test:
+
+```php
+public function test_this_route()
+{
+    config()->set('captchavel.enable', true);
+    config()->set('captchavel.fake', true);
+    
+    // ...
+}
+```
+
 > When faking challenges, there is no need to add any reCAPTCHA token or secrets in your tests.
 
-When using reCAPTCHA v3 (score), you can fake a response made by a human or robot by simply using the `fakeHuman()` and `fakeRobot()` methods, which will score `1.0` or `0.0` respectively.
+When using reCAPTCHA v3 (score), you can fake a response made by a human or robot by simply using the `fakeHuman()` and `fakeRobot()` methods, which will score `1.0` or `0.0` respectively for all subsequent requests.
 
 ```php
 <?php
@@ -300,64 +318,28 @@ $this->post('login', [
 
 > Fake responses don't come with actions, hostnames or APK package names.
 
-### Faking Scores
+### Faking Scores manually
 
-Alternatively, `fakeScore()` method that will fake responses with any score you set.
+Alternatively, `fakeScore()` method will fake responses with any score you set.
 
 ```php
 <?php
 
 use DarkGhostHunter\Captchavel\Facades\Captchavel;
 
-Captchavel::fakeScore(0.7); // A human comment should be public.
+// A human comment should be public.
+Captchavel::fakeScore(0.7);
 
 $this->post('comment', [
     'body' => 'This comment was made by a human',
 ])->assertSee('Your comment has been posted!');
 
-Captchavel::fakeScore(0.4); // A robot should have its comment moderated.
+// A robot should have its comment moderated.
+Captchavel::fakeScore(0.4);
 
 $this->post('comment', [
     'body' => 'Comment made by robot.',
 ])->assertSee('Your comment will be reviewed before publishing.');
-```
-
-### Using your own reCAPTCHA middleware
-
-You may want to create your own reCAPTCHA middleware. Instead of doing one from scratch, you can extend the `BaseReCaptchaMiddleware`.
-
-```php
-<?php
-
-namespace App\Http\Middleware;
-
-use Closure;
-use DarkGhostHunter\Captchavel\Http\Middleware\BaseReCaptchaMiddleware;
-
-class MyReCaptchaMiddleware extends BaseReCaptchaMiddleware
-{
-    /**
-     * Handle the incoming request.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure $next
-     * @return mixed
-     */
-    public function handle($request, Closure $next)
-    {
-        $input = 'g-recaptcha-response';
-        
-        $this->validateRequest($request, $input);
-
-        $response = $this->retrieveChallenge($request, $input, 'checkbox');
-
-        if ($response->isInvalid()) {
-            throw $this->validationException($input, 'Complete the reCAPTCHA challenge');
-        }
-
-        return $next($request);
-    }
-}
 ```
 
 ## Security
