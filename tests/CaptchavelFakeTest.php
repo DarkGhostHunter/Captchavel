@@ -2,10 +2,9 @@
 
 namespace Tests;
 
-use Orchestra\Testbench\TestCase;
-use Illuminate\Support\Facades\Route;
 use DarkGhostHunter\Captchavel\Facades\Captchavel;
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
+use Orchestra\Testbench\TestCase;
 
 class CaptchavelFakeTest extends TestCase
 {
@@ -23,16 +22,16 @@ class CaptchavelFakeTest extends TestCase
 
     public function test_using_fake_on_unit_test()
     {
-        $this->assertTrue(config('captchavel.fake'));
+        static::assertTrue(config('captchavel.fake'));
     }
 
     public function test_makes_fake_score()
     {
         Captchavel::fakeScore(0.3);
 
-        Route::post('test', function (ReCaptchaResponse $response) {
+        $this->app['router']->post('test', function (ReCaptchaResponse $response) {
             return [$response->score, $response->isRobot(), $response->isHuman()];
-        })->middleware('recaptcha.v3:0.6');
+        })->middleware('recaptcha.score:0.6');
 
         $this->post('test')->assertOk()->assertExactJson([0.3, true, false]);
     }
@@ -41,9 +40,9 @@ class CaptchavelFakeTest extends TestCase
     {
         Captchavel::fakeHuman();
 
-        Route::post('test', function (ReCaptchaResponse $response) {
+        $this->app['router']->post('test', function (ReCaptchaResponse $response) {
             return [$response->score, $response->isRobot(), $response->isHuman()];
-        })->middleware('recaptcha.v3:0.6');
+        })->middleware('recaptcha.score:0.6');
 
         $this->post('test')->assertOk()->assertExactJson([1.0, false, true]);
     }
@@ -52,9 +51,9 @@ class CaptchavelFakeTest extends TestCase
     {
         Captchavel::fakeRobot();
 
-        Route::post('test', function (ReCaptchaResponse $response) {
+        $this->app['router']->post('test', function (ReCaptchaResponse $response) {
             return [$response->score, $response->isRobot(), $response->isHuman()];
-        })->middleware('recaptcha.v3:0.6');
+        })->middleware('recaptcha.score:0.6');
 
         $this->post('test')->assertOk()->assertExactJson([0.0, true, false]);
     }

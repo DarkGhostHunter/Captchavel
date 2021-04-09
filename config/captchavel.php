@@ -69,23 +69,21 @@ return [
     */
 
     'credentials' => [
-        'v2' => [
-            'checkbox'  => [
-                'secret' => env('RECAPTCHA_V2_CHECKBOX_SECRET', Captchavel::TEST_V2_SECRET),
-                'key'    => env('RECAPTCHA_V2_CHECKBOX_KEY', Captchavel::TEST_V2_KEY),
+        Captchavel::CHECKBOX => [
+                'secret' => env('RECAPTCHA_CHECKBOX_SECRET', Captchavel::TEST_V2_SECRET),
+                'key'    => env('RECAPTCHA_CHECKBOX_KEY', Captchavel::TEST_V2_KEY),
             ],
-            'invisible' => [
-                'secret' => env('RECAPTCHA_V2_INVISIBLE_SECRET', Captchavel::TEST_V2_SECRET),
-                'key'    => env('RECAPTCHA_V2_INVISIBLE_KEY', Captchavel::TEST_V2_KEY),
-            ],
-            'android'   => [
-                'secret' => env('RECAPTCHA_V2_ANDROID_SECRET', Captchavel::TEST_V2_SECRET),
-                'key'    => env('RECAPTCHA_V2_ANDROID_KEY', Captchavel::TEST_V2_KEY),
-            ],
+        Captchavel::INVISIBLE => [
+            'secret' => env('RECAPTCHA_INVISIBLE_SECRET', Captchavel::TEST_V2_SECRET),
+            'key'    => env('RECAPTCHA_INVISIBLE_KEY', Captchavel::TEST_V2_KEY),
         ],
-        'v3' => [
-            'secret' => env('RECAPTCHA_V3_SECRET'),
-            'key'    => env('RECAPTCHA_V3_KEY'),
+        Captchavel::ANDROID => [
+            'secret' => env('RECAPTCHA_ANDROID_SECRET', Captchavel::TEST_V2_SECRET),
+            'key'    => env('RECAPTCHA_ANDROID_KEY', Captchavel::TEST_V2_KEY),
+        ],
+        Captchavel::SCORE => [
+            'secret' => env('RECAPTCHA_SCORE_SECRET'),
+            'key'    => env('RECAPTCHA_SCORE_KEY'),
         ],
     ],
 ];

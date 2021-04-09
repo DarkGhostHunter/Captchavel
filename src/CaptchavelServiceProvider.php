@@ -2,12 +2,13 @@
 
 namespace DarkGhostHunter\Captchavel;
 
+use DarkGhostHunter\Captchavel\Http\Middleware\VerifyReCaptchaV2;
+use DarkGhostHunter\Captchavel\Http\Middleware\VerifyReCaptchaV3;
+use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Contracts\Config\Repository;
-use DarkGhostHunter\Captchavel\Http\Middleware\VerifyReCaptchaV2;
-use DarkGhostHunter\Captchavel\Http\Middleware\VerifyReCaptchaV3;
 
 class CaptchavelServiceProvider extends ServiceProvider
 {
@@ -20,7 +21,11 @@ class CaptchavelServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/captchavel.php', 'captchavel');
 
+        // This is our new factory of reCAPTCHA responses.
         $this->app->singleton(Captchavel::class);
+
+        // Bind an empty response which by default is never resolved.
+        $this->app->singleton(ReCaptchaResponse::class);
     }
 
     /**
@@ -33,17 +38,15 @@ class CaptchavelServiceProvider extends ServiceProvider
     public function boot(Router $router, Repository $config)
     {
         if ($this->app->runningInConsole()) {
-            $this->publishes([
-                __DIR__.'/../config/captchavel.php' => config_path('captchavel.php'),
-            ], 'config');
+            $this->publishes([__DIR__.'/../config/captchavel.php' => config_path('captchavel.php')], 'config');
 
             if ($this->app->runningUnitTests()) {
                 $config->set('captchavel.fake', true);
             }
         }
 
-        $router->aliasMiddleware('recaptcha.v2', VerifyReCaptchaV2::class);
-        $router->aliasMiddleware('recaptcha.v3', VerifyReCaptchaV3::class);
+        $router->aliasMiddleware('recaptcha', VerifyReCaptchaV2::class);
+        $router->aliasMiddleware('recaptcha.score', VerifyReCaptchaV3::class);
 
         Request::macro('isRobot', [RequestMacro::class, 'isRobot']);
         Request::macro('isHuman', [RequestMacro::class, 'isHuman']);

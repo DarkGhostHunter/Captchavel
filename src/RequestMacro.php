@@ -11,7 +11,7 @@ class RequestMacro
      *
      * @return bool
      */
-    public static function isHuman()
+    public static function isHuman(): bool
     {
         return app(ReCaptchaResponse::class)->isHuman();
     }
@@ -21,7 +21,7 @@ class RequestMacro
      *
      * @return bool
      */
-    public static function isRobot()
+    public static function isRobot(): bool
     {
         return ! static::isHuman();
     }

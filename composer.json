@@ -17,21 +17,18 @@
         }
     ],
     "require": {
-        "php": "^8.0",
+        "php": ">=7.4",
         "ext-json": "*",
-        "illuminate/support": "^8.0",
-        "illuminate/http": "^8.0",
-        "illuminate/routing": "^8.0",
-        "illuminate/container": "^8.0",
-        "illuminate/events": "^8.0",
-        "guzzlehttp/guzzle": "^7.0"
+        "illuminate/support": "^7.0||^8.0",
+        "illuminate/http": "^7.0||^8.0",
+        "illuminate/routing": "^7.0||^8.0",
+        "illuminate/container": "^7.0||^8.0",
+        "illuminate/events": "^7.0||^8.0",
+        "guzzlehttp/guzzle": "^6.0||^7.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^6.14.0",
+        "orchestra/testbench": "^5.18||^6.14.0",
         "phpunit/phpunit": "^9.5.2"
-    },
-    "conflict": {
-        "laravel/octane": "*"
     },
     "autoload": {
         "psr-4": {

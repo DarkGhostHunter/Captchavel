@@ -2,14 +2,11 @@
 
 namespace DarkGhostHunter\Captchavel\Http;
 
-use LogicException;
+use DarkGhostHunter\Captchavel\Captchavel;
 use Illuminate\Support\Fluent;
+use RuntimeException;
 
 /**
- * Class ReCaptchaResponse
- *
- * @package DarkGhostHunter\Captchavel\Http
- *
  * @property-read null|string $hostname
  * @property-read null|string $challenge_ts
  * @property-read null|string $apk_package_name
@@ -21,11 +18,25 @@ use Illuminate\Support\Fluent;
 class ReCaptchaResponse extends Fluent
 {
     /**
+     * Default reCAPTCHA version.
+     *
+     * @var string|null
+     */
+    public ?string $version = null;
+
+    /**
      * The threshold for reCAPTCHA v3.
      *
      * @var float
      */
-    protected $threshold;
+    protected float $threshold = 1.0;
+
+    /**
+     * Check if the response from reCAPTCHA servers has been received.
+     *
+     * @var mixed
+     */
+    protected bool $resolved = false;
 
     /**
      * Sets the threshold to check the response.
@@ -33,11 +44,43 @@ class ReCaptchaResponse extends Fluent
      * @param  float $threshold
      * @return $this
      */
-    public function setThreshold(float $threshold)
+    public function setThreshold(float $threshold): ReCaptchaResponse
     {
         $this->threshold = $threshold;
 
         return $this;
+    }
+
+    /**
+     * Sets the reCAPTCHA response as resolved.
+     *
+     * @return $this
+     */
+    public function setAsResolved(): ReCaptchaResponse
+    {
+        $this->resolved = true;
+
+        return $this;
+    }
+
+    /**
+     * Check if the reCAPTCHA response has been resolved.
+     *
+     * @return bool
+     */
+    public function isResolved(): bool
+    {
+        return $this->resolved;
+    }
+
+    /**
+     * Check if the reCAPTCHA response has not been resolved for the request.
+     *
+     * @return bool
+     */
+    public function isNotResolved():bool
+    {
+        return ! $this->isResolved();
     }
 
     /**
@@ -46,10 +89,18 @@ class ReCaptchaResponse extends Fluent
      * @throws \LogicException
      * @return bool
      */
-    public function isHuman()
+    public function isHuman(): bool
     {
+        if ($this->isNotResolved()) {
+            throw new RuntimeException('There is no reCAPTCHA v3 response resolved for this request');
+        }
+
+        if ($this->version !== Captchavel::SCORE) {
+            throw new RuntimeException('This is not a reCAPTCHA v3 response');
+        }
+
         if ($this->score === null) {
-            throw new LogicException('This is not a reCAPTCHA v3 response, or the score is absent.');
+            throw new RuntimeException('This is reCAPTCHA v3 response has no score');
         }
 
         return $this->score >= $this->threshold;
@@ -60,7 +111,7 @@ class ReCaptchaResponse extends Fluent
      *
      * @return bool
      */
-    public function isRobot()
+    public function isRobot(): bool
     {
         return ! $this->isHuman();
     }
@@ -70,7 +121,7 @@ class ReCaptchaResponse extends Fluent
      *
      * @return bool
      */
-    public function isValid()
+    public function isValid(): bool
     {
         return $this->success && empty($this->error_codes);
     }
@@ -80,7 +131,7 @@ class ReCaptchaResponse extends Fluent
      *
      * @return bool
      */
-    public function isInvalid()
+    public function isInvalid(): bool
     {
         return ! $this->isValid();
     }
@@ -91,7 +142,7 @@ class ReCaptchaResponse extends Fluent
      * @param  string|null  $string
      * @return bool
      */
-    public function differentHostname(?string $string)
+    public function isDifferentHostname(?string $string): bool
     {
         return $string && $this->hostname !== $string;
     }
@@ -102,7 +153,7 @@ class ReCaptchaResponse extends Fluent
      * @param  string|null  $string
      * @return bool
      */
-    public function differentApk(?string $string)
+    public function isDifferentApk(?string $string): bool
     {
         return $string && $this->apk_package_name !== $string;
     }
@@ -113,7 +164,7 @@ class ReCaptchaResponse extends Fluent
      * @param  null|string  $action
      * @return bool
      */
-    public function differentAction(?string $action)
+    public function isDifferentAction(?string $action): bool
     {
         return $action && $this->action !== $action;
     }
@@ -121,12 +172,67 @@ class ReCaptchaResponse extends Fluent
     /**
      * Dynamically return an attribute as a property.
      *
-     * @param $name
-     * @return null|mixed
+     * @param $key
+     * @return mixed
      */
-    public function __get($name)
+    public function __get($key)
     {
         // Minor fix for getting the error codes
-        return parent::__get($name === 'error_codes' ? 'error-codes' : $name);
+        return parent::__get($key === 'error_codes' ? 'error-codes' : $key);
     }
+
+    /**
+     * Sets the version for this reCAPTCHA response.
+     *
+     * @param  string  $version
+     *
+     * @return $this
+     */
+    public function setVersion(string $version): ReCaptchaResponse
+    {
+        $this->version = $version;
+
+        return $this;
+    }
+
+    /**
+     * Checks if the reCAPTCHA challenge is for a given version.
+     *
+     * @return bool
+     */
+    public function isCheckbox(): bool
+    {
+        return $this->version === Captchavel::CHECKBOX;
+    }
+
+    /**
+     * Checks if the reCAPTCHA challenge is for a given version.
+     *
+     * @return bool
+     */
+    public function isInvisible(): bool
+    {
+        return $this->version === Captchavel::INVISIBLE;
+    }
+
+    /**
+     * Checks if the reCAPTCHA challenge is for a given version.
+     *
+     * @return bool
+     */
+    public function isAndroid(): bool
+    {
+        return $this->version === Captchavel::ANDROID;
+    }
+
+    /**
+     * Checks if the reCAPTCHA challenge is for a given version.
+     *
+     * @return bool
+     */
+    public function isScore(): bool
+    {
+        return $this->version === Captchavel::SCORE;
+    }
+
 }

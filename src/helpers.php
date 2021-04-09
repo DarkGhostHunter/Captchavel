@@ -1,23 +1,20 @@
 <?php
 
-if (! function_exists('captchavel')) {
+if (!function_exists('captchavel')) {
     /**
      * Returns the site key for the given reCAPTCHA challenge mechanism.
      *
-     * @param  string $credentials
+     * @param  string  $mode
+     *
      * @return string
      * @throws \LogicException
      */
-    function captchavel(string $credentials)
+    function captchavel(string $mode): string
     {
-        if (in_array($credentials, ['3', 'v3', 'score']) && $key = config('captchavel.credentials.v3.key')) {
-            return $key;
+        if (blank($key = config("captchavel.credentials.{$mode}.key"))) {
+            throw new RuntimeException("The reCAPTCHA site key for [$mode] doesn't exist.");
         }
 
-        if ($key = config("captchavel.credentials.v2.$credentials.key")) {
-            return $key;
-        }
-
-        throw new LogicException("The reCAPTCHA site key for [$credentials] doesn't exist.");
+        return $key;
     }
 }
