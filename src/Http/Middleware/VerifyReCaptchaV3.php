@@ -7,11 +7,41 @@ use DarkGhostHunter\Captchavel\Captchavel;
 use DarkGhostHunter\Captchavel\CaptchavelFake;
 use DarkGhostHunter\Captchavel\Facades\Captchavel as CaptchavelFacade;
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
+use Illuminate\Config\Repository;
 use Illuminate\Container\Container;
 use Illuminate\Http\Request;
 
-class VerifyReCaptchaV3 extends BaseReCaptchaMiddleware
+class VerifyReCaptchaV3
 {
+    use ChecksCaptchavelStatus;
+    use ValidatesRequestAndResponse;
+
+    /**
+     * Captchavel connector.
+     *
+     * @var \DarkGhostHunter\Captchavel\Captchavel|\DarkGhostHunter\Captchavel\CaptchavelFake
+     */
+    protected Captchavel $captchavel;
+
+    /**
+     * Application Config repository.
+     *
+     * @var \Illuminate\Config\Repository
+     */
+    protected Repository $config;
+
+    /**
+     * BaseReCaptchaMiddleware constructor.
+     *
+     * @param  \DarkGhostHunter\Captchavel\Captchavel  $captchavel
+     * @param  \Illuminate\Config\Repository  $config
+     */
+    public function __construct(Captchavel $captchavel, Repository $config)
+    {
+        $this->config = $config;
+        $this->captchavel = $captchavel;
+    }
+
     /**
      * Handle the incoming request.
      *
@@ -32,42 +62,34 @@ class VerifyReCaptchaV3 extends BaseReCaptchaMiddleware
     )
     {
         if ($this->isEnabled()) {
-            if ($this->isReal()) {
-                $this->validateRequest($request, $input);
-            } else {
-                $this->ensureFakeCaptchavel();
+            if ($this->isFake()) {
                 $this->fakeResponseScore($request);
-                $this->prepareRequestForFaking($request, $input);
+            } else {
+                $this->validateRequest($request, $input);
             }
 
-            $this->processChallenge($request, $threshold, $action, $input);
+            $this->processChallenge($request, $input, $threshold, $action);
         }
 
         return $next($request);
     }
 
     /**
-     * Ensure we're using Captchavel Fake.
+     * Fakes a score reCAPTCHA response.
+     *
+     * @param  \Illuminate\Http\Request  $request
      *
      * @return void
      */
-    protected function ensureFakeCaptchavel(): void
+    protected function fakeResponseScore(Request $request): void
     {
         if (! $this->captchavel instanceof CaptchavelFake) {
             $this->captchavel = CaptchavelFacade::fake();
         }
-    }
 
-    /**
-     * Prepare the Request to with a fake challenge input.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $input
-     */
-    protected function prepareRequestForFaking(Request $request, string $input)
-    {
-        if ($request->missing($input)) {
-            $request->merge([$input => 'fake_challenge_input']);
+        // If the Captchavel has set an score to fake, use it, otherwise go default.
+        if ($this->captchavel->score === null) {
+            $request->filled('is_robot') ? $this->captchavel->fakeRobots() : $this->captchavel->fakeHumans();
         }
     }
 
@@ -75,16 +97,19 @@ class VerifyReCaptchaV3 extends BaseReCaptchaMiddleware
      * Process the response from reCAPTCHA servers.
      *
      * @param  \Illuminate\Http\Request  $request
+     * @param  string  $input
      * @param  null|string  $threshold
      * @param  null|string  $action
-     * @param  string  $input
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    protected function processChallenge(Request $request, ?string $threshold, ?string $action, string $input)
+    protected function processChallenge(Request $request, string $input, ?string $threshold, ?string $action)
     {
-        $response = $this->retrieveChallenge($request, $input, Captchavel::SCORE)
-            ->setThreshold($this->normalizeThreshold($threshold));
+        $response = $this->captchavel->getChallenge(
+            $request->input($input),
+            $request->ip(),
+            Captchavel::SCORE
+        )->setThreshold($this->normalizeThreshold($threshold));
 
         $this->validateResponse($response, $input, $this->normalizeAction($action));
 

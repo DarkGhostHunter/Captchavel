@@ -83,7 +83,9 @@ class Captchavel
      */
     public function getChallenge(string $challenge, string $ip, string $version): ReCaptchaResponse
     {
-        $response = $this->send($challenge, $ip, $this->useCredentials($version))->setVersion($version)->setAsResolved();
+        $response = $this->send($challenge, $ip, $this->useCredentials($version))
+            ->setVersion($version)
+            ->setAsResolved();
 
         Container::getInstance()->instance(ReCaptchaResponse::class, $response);
 

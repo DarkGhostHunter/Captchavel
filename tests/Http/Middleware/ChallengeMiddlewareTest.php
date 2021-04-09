@@ -5,8 +5,6 @@ namespace Tests\Http\Middleware;
 use DarkGhostHunter\Captchavel\Captchavel;
 use DarkGhostHunter\Captchavel\Events\ReCaptchaResponseReceived;
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route;
 use Orchestra\Testbench\TestCase;
 use Tests\RegistersPackage;
 
@@ -31,7 +29,7 @@ class ChallengeMiddlewareTest extends TestCase
     {
         config()->set('app.debug', false);
 
-        Route::post(
+        $this->app['router']->post(
             'test',
             function () {
                 return 'ok';
@@ -47,8 +45,6 @@ class ChallengeMiddlewareTest extends TestCase
     {
         config(['captchavel.enable' => false]);
 
-        $event = Event::fake();
-
         $this->mock(Captchavel::class)->shouldNotReceive('resolve');
 
         $this->post('v2/checkbox')->assertOk();
@@ -56,9 +52,9 @@ class ChallengeMiddlewareTest extends TestCase
         $this->post('v2/android')->assertOk();
     }
 
-    public function test_fakes_success()
+    public function test_success_when_disabled()
     {
-        config(['captchavel.fake' => true]);
+        config(['captchavel.enable' => false]);
 
         $this->post('v2/checkbox')->assertOk();
         $this->post('v2/checkbox/input_bar')->assertOk();

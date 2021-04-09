@@ -16,13 +16,13 @@ class CaptchavelFake extends Captchavel
     /**
      * Resolves a reCAPTCHA challenge.
      *
-     * @param  string  $challenge
+     * @param  string|null  $challenge
      * @param  string  $ip
-     * @param  string|null  $version
+     * @param  string  $version
      *
      * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
      */
-    public function getChallenge(string $challenge, string $ip, string $version = null): ReCaptchaResponse
+    public function getChallenge(?string $challenge = null, string $ip, string $version): ReCaptchaResponse
     {
         return (new ReCaptchaResponse(
             [

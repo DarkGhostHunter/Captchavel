@@ -24,7 +24,6 @@ class Captchavel extends Facade
      * Returns a new Captchavel service to fake responses.
      *
      * @return \DarkGhostHunter\Captchavel\CaptchavelFake
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     public static function fake(): CaptchavelFake
     {
