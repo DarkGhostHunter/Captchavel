@@ -2,237 +2,217 @@
 
 namespace DarkGhostHunter\Captchavel\Http;
 
-use DarkGhostHunter\Captchavel\Captchavel;
-use Illuminate\Support\Fluent;
-use RuntimeException;
+use GuzzleHttp\Promise\PromiseInterface;
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Http\Client\Response;
+use Illuminate\Support\Carbon;
+use JsonSerializable;
+
+use function array_key_exists;
+use function json_encode;
+use function value;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
- * @property-read null|string $hostname
- * @property-read null|string $challenge_ts
- * @property-read null|string $apk_package_name
- * @property-read null|float $score
- * @property-read null|string $action
- * @property-read array $error_codes
  * @property-read bool $success
+ * @property-read string $hostname
+ * @property-read string $challenge_ts
+ * @property-read string $apk_package_name
+ * @property-read string $action
+ * @property-read float $score
+ * @property-read array $error_codes
  */
-class ReCaptchaResponse extends Fluent
+class ReCaptchaResponse implements JsonSerializable, Arrayable, Jsonable
 {
-    /**
-     * Default reCAPTCHA version.
-     *
-     * @var string|null
-     */
-    public ?string $version = null;
+    use CheckScore;
+    use ValidatesResponse;
 
     /**
-     * The threshold for reCAPTCHA v3.
+     * The data from the reCAPTCHA response.
      *
-     * @var float
+     * @var array
      */
-    protected float $threshold = 1.0;
+    protected array $attributes = [];
 
     /**
-     * Check if the response from reCAPTCHA servers has been received.
+     * Creates a new reCAPTCHA Response Container.
      *
-     * @var mixed
+     * @param  \GuzzleHttp\Promise\PromiseInterface  $promise
+     * @param  string  $input
+     * @param  string|null  $expectedAction
      */
-    protected bool $resolved = false;
-
-    /**
-     * Sets the threshold to check the response.
-     *
-     * @param  float $threshold
-     * @return $this
-     */
-    public function setThreshold(float $threshold): ReCaptchaResponse
+    public function __construct(
+        protected PromiseInterface $promise,
+        protected string $input,
+        protected ?string $expectedAction = null
+    )
     {
-        $this->threshold = $threshold;
-
-        return $this;
+        $this->promise = $this->promise->then(function (Response $response): void {
+            $this->attributes = $response->json();
+            $this->validate();
+        });
     }
 
     /**
-     * Sets the reCAPTCHA response as resolved.
-     *
-     * @return $this
-     */
-    public function setAsResolved(): ReCaptchaResponse
-    {
-        $this->resolved = true;
-
-        return $this;
-    }
-
-    /**
-     * Check if the reCAPTCHA response has been resolved.
+     * Checks if the response has been resolved.
      *
      * @return bool
      */
     public function isResolved(): bool
     {
-        return $this->resolved;
+        return $this->promise->getState() === PromiseInterface::FULFILLED;
     }
 
     /**
-     * Check if the reCAPTCHA response has not been resolved for the request.
+     * Checks if the response has yet to be resolved.
      *
      * @return bool
      */
-    public function isNotResolved():bool
+    public function isPending(): bool
     {
         return ! $this->isResolved();
     }
 
     /**
-     * Returns if the response was made by a Human.
+     * Returns the timestamp of the challenge as a Carbon instance.
      *
-     * @throws \LogicException
-     * @return bool
+     * @return \Illuminate\Support\Carbon
      */
-    public function isHuman(): bool
+    public function carbon(): Carbon
     {
-        if ($this->isNotResolved()) {
-            throw new RuntimeException('There is no reCAPTCHA v3 response resolved for this request');
-        }
-
-        if ($this->version !== Captchavel::SCORE) {
-            throw new RuntimeException('This is not a reCAPTCHA v3 response');
-        }
-
-        if ($this->score === null) {
-            throw new RuntimeException('This is reCAPTCHA v3 response has no score');
-        }
-
-        return $this->score >= $this->threshold;
+        return Carbon::createFromFormat('Y-m-d\TH:i:s\Z', $this->get('challenge_ts'));
     }
 
     /**
-     * Returns if the response was made by a Robot.
-     *
-     * @return bool
-     */
-    public function isRobot(): bool
-    {
-        return ! $this->isHuman();
-    }
-
-    /**
-     * Returns if the challenge is valid.
-     *
-     * @return bool
-     */
-    public function isValid(): bool
-    {
-        return $this->success && empty($this->error_codes);
-    }
-
-    /**
-     * Returns if the challenge is invalid.
-     *
-     * @return bool
-     */
-    public function isInvalid(): bool
-    {
-        return ! $this->isValid();
-    }
-
-    /**
-     * Check if the hostname is different to the one issued.
-     *
-     * @param  string|null  $string
-     * @return bool
-     */
-    public function isDifferentHostname(?string $string): bool
-    {
-        return $string && $this->hostname !== $string;
-    }
-
-    /**
-     * Check if the APK name is different to the one issued.
-     *
-     * @param  string|null  $string
-     * @return bool
-     */
-    public function isDifferentApk(?string $string): bool
-    {
-        return $string && $this->apk_package_name !== $string;
-    }
-
-    /**
-     * Check if the action name is different to the one issued.
-     *
-     * @param  null|string  $action
-     * @return bool
-     */
-    public function isDifferentAction(?string $action): bool
-    {
-        return $action && $this->action !== $action;
-    }
-
-    /**
-     * Dynamically return an attribute as a property.
-     *
-     * @param $key
-     * @return mixed
-     */
-    public function __get($key)
-    {
-        // Minor fix for getting the error codes
-        return parent::__get($key === 'error_codes' ? 'error-codes' : $key);
-    }
-
-    /**
-     * Sets the version for this reCAPTCHA response.
-     *
-     * @param  string  $version
+     * Waits for this reCAPTCHA to be resolved.
      *
      * @return $this
      */
-    public function setVersion(string $version): ReCaptchaResponse
+    public function wait(): static
     {
-        $this->version = $version;
+        $this->promise->wait();
 
         return $this;
     }
 
     /**
-     * Checks if the reCAPTCHA challenge is for a given version.
+     * Terminates the reCAPTCHA response if still pending.
      *
-     * @return bool
+     * @return void
      */
-    public function isCheckbox(): bool
+    public function terminate(): void
     {
-        return $this->version === Captchavel::CHECKBOX;
+        $this->promise->cancel();
     }
 
     /**
-     * Checks if the reCAPTCHA challenge is for a given version.
+     * Returns the raw attributes of the response, bypassing the promise resolving.
      *
-     * @return bool
+     * @return array
      */
-    public function isInvisible(): bool
+    public function getAttributes(): array
     {
-        return $this->version === Captchavel::INVISIBLE;
+        return $this->attributes;
     }
 
     /**
-     * Checks if the reCAPTCHA challenge is for a given version.
+     * Get an attribute from the instance.
      *
-     * @return bool
+     * @param  string  $key
+     * @param  mixed  $default
+     * @return mixed
      */
-    public function isAndroid(): bool
+    public function get(string $key, mixed $default = null): mixed
     {
-        return $this->version === Captchavel::ANDROID;
+        $this->wait();
+
+        return $this->attributes[$key] ?? value($default);
     }
 
     /**
-     * Checks if the reCAPTCHA challenge is for a given version.
+     * Convert the instance to an array.
      *
-     * @return bool
+     * @return array
      */
-    public function isScore(): bool
+    public function toArray(): array
     {
-        return $this->version === Captchavel::SCORE;
+        $this->wait();
+
+        return $this->getAttributes();
     }
 
+    /**
+     * Convert the object into something JSON serializable.
+     *
+     * @return array
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
+    }
+
+    /**
+     * Convert the instance to JSON.
+     *
+     * @param  int  $options
+     * @return string
+     * @throws \JsonException
+     */
+    public function toJson($options = 0): string
+    {
+        return json_encode($this->jsonSerialize(), JSON_THROW_ON_ERROR | $options);
+    }
+
+    /**
+     * Dynamically retrieve the value of an attribute.
+     *
+     * @param  string  $key
+     * @return mixed
+     */
+    public function __get(string $key): mixed
+    {
+        return $this->get($key);
+    }
+
+    /**
+     * Dynamically set the value of an attribute.
+     *
+     * @param  string  $key
+     * @param  mixed  $value
+     * @return void
+     */
+    public function __set(string $key, mixed $value): void
+    {
+        $this->wait();
+
+        $this->attributes[$key] = $value;
+    }
+
+    /**
+     * Dynamically check if an attribute is set.
+     *
+     * @param  string  $key
+     * @return bool
+     */
+    public function __isset(string $key): bool
+    {
+        $this->wait();
+
+        return array_key_exists($key, $this->attributes);
+    }
+
+    /**
+     * Dynamically unset an attribute.
+     *
+     * @param  string  $key
+     * @return void
+     */
+    public function __unset(string $key): void
+    {
+        $this->wait();
+
+        unset($this->attributes[$key]);
+    }
 }

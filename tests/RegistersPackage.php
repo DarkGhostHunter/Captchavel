@@ -15,5 +15,4 @@ trait RegistersPackage
     {
         return ['DarkGhostHunter\Captchavel\CaptchavelServiceProvider'];
     }
-
 }

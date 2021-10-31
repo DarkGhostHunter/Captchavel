@@ -4,12 +4,15 @@ namespace DarkGhostHunter\Captchavel;
 
 use DarkGhostHunter\Captchavel\Http\Middleware\VerifyReCaptchaV2;
 use DarkGhostHunter\Captchavel\Http\Middleware\VerifyReCaptchaV3;
-use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
+/**
+ * @internal
+ */
 class CaptchavelServiceProvider extends ServiceProvider
 {
     /**
@@ -20,12 +23,11 @@ class CaptchavelServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(__DIR__.'/../config/captchavel.php', 'captchavel');
+        $this->loadTranslationsFrom(__DIR__. '/../resources/lang', 'captchavel');
 
-        // This is our new factory of reCAPTCHA responses.
-        $this->app->singleton(Captchavel::class);
-
-        // Bind an empty response which by default is never resolved.
-        $this->app->singleton(ReCaptchaResponse::class);
+        $this->app->singleton(Captchavel::class, static function ($app): Captchavel {
+            return new Captchavel($app[Factory::class], $app['config']);
+        });
     }
 
     /**
@@ -45,8 +47,8 @@ class CaptchavelServiceProvider extends ServiceProvider
             }
         }
 
-        $router->aliasMiddleware('recaptcha', VerifyReCaptchaV2::class);
-        $router->aliasMiddleware('recaptcha.score', VerifyReCaptchaV3::class);
+        $router->aliasMiddleware(VerifyReCaptchaV2::SIGNATURE, VerifyReCaptchaV2::class);
+        $router->aliasMiddleware(VerifyReCaptchaV3::SIGNATURE, VerifyReCaptchaV3::class);
 
         Request::macro('isRobot', [RequestMacro::class, 'isRobot']);
         Request::macro('isHuman', [RequestMacro::class, 'isHuman']);

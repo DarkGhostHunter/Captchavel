@@ -30,28 +30,40 @@ trait UsesRoutesWithMiddleware
             return $response;
         })->middleware('recaptcha.score:null,null,bar');
 
-        $this->app['router']->post('v2/checkbox', function (ReCaptchaResponse $response) {
-            return $response;
+        $this->app['router']->post('v2/checkbox', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
         })->middleware('recaptcha:checkbox');
 
-        $this->app['router']->post('v2/checkbox/input_bar', function (ReCaptchaResponse $response) {
-            return $response;
+        $this->app['router']->post('v2/checkbox/input_bar', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
         })->middleware('recaptcha:checkbox,bar');
 
-        $this->app['router']->post('v2/invisible', function (ReCaptchaResponse $response) {
-            return $response;
+        $this->app['router']->post('v2/invisible', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
         })->middleware('recaptcha:invisible');
 
-        $this->app['router']->post('v2/invisible/input_bar', function (ReCaptchaResponse $response) {
-            return $response;
+        $this->app['router']->post('v2/invisible/input_bar', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
         })->middleware('recaptcha:invisible,bar');
 
-        $this->app['router']->post('v2/android', function (ReCaptchaResponse $response) {
-            return $response;
+        $this->app['router']->post('v2/android', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
         })->middleware('recaptcha:android');
 
-        $this->app['router']->post('v2/android/input_bar', function (ReCaptchaResponse $response) {
-            return $response;
+        $this->app['router']->post('v2/android/input_bar', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
         })->middleware('recaptcha:android,bar');
     }
 }

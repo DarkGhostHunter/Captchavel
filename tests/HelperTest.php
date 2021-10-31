@@ -10,7 +10,7 @@ class HelperTest extends TestCase
 {
     use RegistersPackage;
 
-    public function test_exception_when_no_v3_key_loaded()
+    public function test_exception_when_no_v3_key_loaded(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The reCAPTCHA site key for [3] doesn\'t exist.');
@@ -18,14 +18,14 @@ class HelperTest extends TestCase
         captchavel(3);
     }
 
-    public function test_retrieves_test_keys_by_default()
+    public function test_retrieves_test_keys_by_default(): void
     {
         static::assertSame(Captchavel::TEST_V2_KEY, captchavel('checkbox'));
         static::assertSame(Captchavel::TEST_V2_KEY, captchavel('invisible'));
         static::assertSame(Captchavel::TEST_V2_KEY, captchavel('android'));
     }
 
-    public function test_retrieves_secrets()
+    public function test_retrieves_secrets(): void
     {
         config(['captchavel.credentials' => [
             'checkbox' => ['key' => 'key-checkbox'],

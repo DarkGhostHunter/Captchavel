@@ -3,7 +3,19 @@
 namespace DarkGhostHunter\Captchavel;
 
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
+use DarkGhostHunter\Captchavel\Http\ReCaptchaV3Response;
+use GuzzleHttp\Promise\FulfilledPromise;
+use GuzzleHttp\Psr7\Response as GuzzleResponse;
+use Illuminate\Http\Client\Response;
 
+use function json_encode;
+use function now;
+
+use const JSON_THROW_ON_ERROR;
+
+/**
+ * @internal
+ */
 class CaptchavelFake extends Captchavel
 {
     /**
@@ -14,26 +26,35 @@ class CaptchavelFake extends Captchavel
     public ?float $score = null;
 
     /**
-     * Resolves a reCAPTCHA challenge.
-     *
-     * @param  string|null  $challenge
-     * @param  string  $ip
-     * @param  string  $version
-     *
-     * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
+     * @inheritDoc
      */
-    public function getChallenge(?string $challenge = null, string $ip, string $version): ReCaptchaResponse
+    public function getChallenge(
+        ?string $challenge,
+        string $ip,
+        string $version,
+        string $input,
+        string $action = null,
+    ): ReCaptchaResponse
     {
-        return (new ReCaptchaResponse(
-            [
-                'success' => true,
-                'action' => null,
-                'hostname' => null,
-                'apk_package_name' => null,
-                'challenge_ts' => now()->toAtomString(),
-                'score' => $this->score,
-            ]
-        ))->setVersion(Captchavel::SCORE)->setAsResolved();
+        return new ReCaptchaResponse(
+            new FulfilledPromise(
+                new Response(
+                    new GuzzleResponse(
+                        200,
+                        ['Content-type' => 'application/json'],
+                        json_encode([
+                            'success'          => true,
+                            'action'           => null,
+                            'hostname'         => null,
+                            'apk_package_name' => null,
+                            'challenge_ts'     => now()->toAtomString(),
+                            'score'            => $this->score ?? 1.0,
+                        ], JSON_THROW_ON_ERROR)
+                    )
+                )
+            ),
+            $input,
+        );
     }
 
     /**
@@ -53,9 +74,9 @@ class CaptchavelFake extends Captchavel
      *
      * @return void
      */
-    public function fakeRobots(): void
+    public function fakeRobot(): void
     {
-        $this->score = 0;
+        $this->fakeScore(0);
     }
 
     /**
@@ -63,8 +84,8 @@ class CaptchavelFake extends Captchavel
      *
      * @return void
      */
-    public function fakeHumans(): void
+    public function fakeHuman(): void
     {
-        $this->score = 1.0;
+        $this->fakeScore(1.0);
     }
 }

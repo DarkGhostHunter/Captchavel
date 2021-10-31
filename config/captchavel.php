@@ -9,7 +9,7 @@ return [
     | Main switch
     |--------------------------------------------------------------------------
     |
-    | This switch enables the main Captchavel middleware that will detect all
+    | This switch enables the main Captchavel v2 middleware to detect all the
     | challenges incoming. You should activate it on production environments
     | and deactivate it on local environments unless you to test responses.
     |
@@ -25,6 +25,8 @@ return [
     | Sometimes you may want to fake success or failed responses from reCAPTCHA
     | servers in local development. To do this, simply enable the environment
     | variable and then issue as a checkbox parameter is_robot to any form.
+    |
+    | For v2 middleware, faking means bypassing checks.
     |
     */
 
@@ -49,9 +51,9 @@ return [
     | Threshold
     |--------------------------------------------------------------------------
     |
-    | For reCAPTCHA v3, which is an score-driven interaction, this default
+    | For reCAPTCHA v3, which is a score-driven interaction, this default
     | threshold is the slicing point between bots and humans. If a score
-    | is below this threshold, it means the request was made by a bot.
+    | is below this threshold it means the request was made by a bot.
     |
     */
 
@@ -59,7 +61,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Credenctials
+    | Credentials
     |--------------------------------------------------------------------------
     |
     | The following is the array of credentials for each version and variant
@@ -70,9 +72,9 @@ return [
 
     'credentials' => [
         Captchavel::CHECKBOX => [
-                'secret' => env('RECAPTCHA_CHECKBOX_SECRET', Captchavel::TEST_V2_SECRET),
-                'key'    => env('RECAPTCHA_CHECKBOX_KEY', Captchavel::TEST_V2_KEY),
-            ],
+            'secret' => env('RECAPTCHA_CHECKBOX_SECRET', Captchavel::TEST_V2_SECRET),
+            'key'    => env('RECAPTCHA_CHECKBOX_KEY', Captchavel::TEST_V2_KEY),
+        ],
         Captchavel::INVISIBLE => [
             'secret' => env('RECAPTCHA_INVISIBLE_SECRET', Captchavel::TEST_V2_SECRET),
             'key'    => env('RECAPTCHA_INVISIBLE_KEY', Captchavel::TEST_V2_KEY),

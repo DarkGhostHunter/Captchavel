@@ -3,13 +3,14 @@
 namespace DarkGhostHunter\Captchavel;
 
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
-use Illuminate\Container\Container;
+use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Client\Factory;
-use Illuminate\Http\Client\Response;
 use LogicException;
-use RuntimeException;
 
+/**
+ * @internal
+ */
 class Captchavel
 {
     // Constants to identify each reCAPTCHA service.
@@ -47,18 +48,18 @@ class Captchavel
     public const INPUT = 'g-recaptcha-response';
 
     /**
-     * Laravel HTTP Client factory.
+     * If Captchavel is enabled;
      *
-     * @var \Illuminate\Http\Client\Factory
+     * @var bool|mixed
      */
-    protected Factory $http;
+    protected bool $enabled = false;
 
     /**
-     * Config Repository.
+     * If this should fake responses.
      *
-     * @var \Illuminate\Contracts\Config\Repository
+     * @var bool|mixed
      */
-    protected Repository $config;
+    protected bool $fake = false;
 
     /**
      * Create a new Captchavel instance.
@@ -66,90 +67,103 @@ class Captchavel
      * @param  \Illuminate\Http\Client\Factory  $http
      * @param  \Illuminate\Contracts\Config\Repository  $config
      */
-    public function __construct(Factory $http, Repository $config)
+    public function __construct(protected Factory $http, protected Repository $config)
     {
-        $this->http = $http;
-        $this->config = $config;
+        $this->enabled = $this->config->get('captchavel.enable');
+        $this->fake = $this->config->get('captchavel.fake');
+    }
+
+    /**
+     * Check if Captchavel is enabled.
+     *
+     * @return bool
+     */
+    public function isEnabled(): bool
+    {
+        return $this->enabled;
+    }
+
+    /**
+     * Check if Captchavel is disabled.
+     *
+     * @return bool
+     */
+    public function isDisabled(): bool
+    {
+        return !$this->isEnabled();
+    }
+
+    /**
+     * Check if the reCAPTCHA response should be faked on-demand.
+     *
+     * @return bool
+     */
+    public function shouldFake(): bool
+    {
+        return $this->fake;
+    }
+
+    /**
+     * Returns the reCAPTCHA response.
+     *
+     * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
+     */
+    public function response(): ReCaptchaResponse
+    {
+        return app(ReCaptchaResponse::class);
     }
 
     /**
      * Resolves a reCAPTCHA challenge.
      *
+     * @param  string|null  $challenge
+     * @param  string  $ip
+     * @param  string  $version
+     * @param  string  $input
+     * @param  string|null  $action
+     * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
+     */
+    public function getChallenge(
+        ?string $challenge,
+        string $ip,
+        string $version,
+        string $input,
+        string $action = null,
+    ): ReCaptchaResponse
+    {
+        return new ReCaptchaResponse($this->request($challenge, $ip, $version), $input, $action);
+    }
+
+    /**
+     * Creates a Pending Request or a Promise.
+     *
      * @param  string  $challenge
      * @param  string  $ip
      * @param  string  $version
-     *
-     * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
+     * @return \GuzzleHttp\Promise\PromiseInterface<\Illuminate\Http\Client\Response>
      */
-    public function getChallenge(string $challenge, string $ip, string $version): ReCaptchaResponse
+    protected function request(string $challenge, string $ip, string $version): PromiseInterface
     {
-        $response = $this->send($challenge, $ip, $this->useCredentials($version))
-            ->setVersion($version)
-            ->setAsResolved();
-
-        Container::getInstance()->instance(ReCaptchaResponse::class, $response);
-
-        return $response;
+        return $this->http
+            ->asForm()
+            ->async()
+            ->withOptions(['version' => 2.0])
+            ->post(static::RECAPTCHA_ENDPOINT, [
+                'secret'   => $this->secret($version),
+                'response' => $challenge,
+                'remoteip' => $ip,
+            ]);
     }
 
     /**
      * Sets the correct credentials to use to retrieve the challenge results.
      *
-     * @param  string  $mode
-     *
+     * @param  string  $version
      * @return string
      */
-    protected function useCredentials(string $mode): string
+    protected function secret(string $version): string
     {
-        if (!in_array($mode, static::getModes())) {
-            throw new LogicException('The reCAPTCHA mode must be: ' . implode(', ', static::getModes()));
-        }
-
-        if (! $key = $this->config->get("captchavel.credentials.{$mode}.secret")) {
-            throw new RuntimeException("The reCAPTCHA secret for [{$mode}] doesn't exists");
-        }
-
-        return $key;
-    }
-
-    /**
-     * Retrieves the Response Challenge.
-     *
-     * @param  string  $challenge
-     * @param  string  $ip
-     * @param  string  $secret
-     *
-     * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
-     */
-    protected function send(string $challenge, string $ip, string $secret): ReCaptchaResponse
-    {
-        $response = $this->http
-            ->asForm()
-            ->withOptions(['version' => 2.0])
-            ->post(static::RECAPTCHA_ENDPOINT, ['secret' => $secret, 'response' => $challenge, 'remoteip' => $ip]);
-
-        return $this->parse($response);
-    }
-
-    /**
-     * Parses the Response
-     *
-     * @param  \Illuminate\Http\Client\Response  $response
-     *
-     * @return \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse
-     */
-    protected function parse(Response $response): ReCaptchaResponse
-    {
-        return new ReCaptchaResponse($response->json());
-    }
-
-    /**
-     * Checks if the mode is a valid mode name.
-     *
-     * @return array|string[]
-     */
-    protected static function getModes(): array
-    {
-        return [static::CHECKBOX, static::INVISIBLE, static::ANDROID, static::SCORE];
+        return $this->config->get("captchavel.credentials.$version.secret")
+            ?? throw new LogicException("The reCAPTCHA secret for [$version] doesn't exists or is not set.");
     }
 }

@@ -1,76 +1,102 @@
-<?php /** @noinspection ALL */
+<?php
+/** @noinspection ALL */
 
 namespace Tests\Http\Middleware;
 
 use DarkGhostHunter\Captchavel\Captchavel;
+use DarkGhostHunter\Captchavel\CaptchavelFake;
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
-use GuzzleHttp\Psr7\Response as GuzzleResponse;
+use DarkGhostHunter\Captchavel\ReCaptcha;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\Client\Factory;
-use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Orchestra\Testbench\TestCase;
+use Tests\CreatesFulfilledResponse;
 use Tests\RegistersPackage;
+
+use function config;
+use function trans;
 
 class ScoreMiddlewareTest extends TestCase
 {
     use RegistersPackage;
     use UsesRoutesWithMiddleware;
+    use CreatesFulfilledResponse;
 
     protected function setUp(): void
     {
         $this->afterApplicationCreated(
-            function () {
+            function (): void {
                 $this->createsRoutes();
-                config(['captchavel.fake' => false]);
+                $this->app['config']->set('captchavel.fake', false);
             }
         );
 
         parent::setUp();
     }
 
-    public function test_bypass_if_not_enabled()
+    public function test_fakes_response_if_authenticated_in_guard(): void
+    {
+        $this->app['router']->post('v3/guarded', function (ReCaptchaResponse $response) {
+            return $response;
+        })->middleware(ReCaptcha::score()->except('web')->toString());
+
+        $this->actingAs(User::make(), 'web');
+
+        $this->post('v3/guarded')->assertOk();
+        $this->assertEquals(1.0, $this->app[ReCaptchaResponse::class]->score);
+        $this->assertInstanceOf(CaptchavelFake::class, $this->app[Captchavel::class]);
+    }
+
+    public function test_fakes_response_if_not_enabled(): void
     {
         config(['captchavel.enable' => false]);
 
-        $this->mock(Captchavel::class)->shouldNotReceive('getChallenge');
-
         $this->post('v3/default')->assertOk();
+
+        $this->assertEquals(1.0, $this->app[ReCaptchaResponse::class]->score);
+        $this->assertInstanceOf(CaptchavelFake::class, $this->app[Captchavel::class]);
     }
 
-    public function test_validates_if_real()
+    public function test_fakes_response_if_enabled_and_fake(): void
+    {
+        config(['captchavel.enable' => true]);
+        config(['captchavel.fake' => true]);
+
+        $this->post('v3/default')->assertOk();
+
+        $this->assertEquals(1.0, $this->app[ReCaptchaResponse::class]->score);
+        $this->assertInstanceOf(CaptchavelFake::class, $this->app[Captchavel::class]);
+    }
+
+    public function test_validates_if_real(): void
     {
         $mock = $this->mock(Captchavel::class);
 
+        $mock->shouldReceive('isDisabled')->once()->andReturnFalse();
+
+        $mock->shouldReceive('shouldFake')->once()->andReturnFalse();
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
-                new ReCaptchaResponse(
-                    [
-                        'success' => true,
-                        'score' => 0.5,
-                        'foo' => 'bar',
-                    ]
-                )
+                $this->fulfilledResponse([
+                    'success' => true,
+                    'score'   => 0.5,
+                    'foo'     => 'bar',
+                ])
             );
 
-        $this->post(
-            'v3/default',
-            [
-                Captchavel::INPUT => 'token',
-            ]
-        )
+        $this->post('v3/default', [Captchavel::INPUT => 'token'])
             ->assertOk()
-            ->assertExactJson(
-                [
-                    'success' => true,
-                    'score' => 0.5,
-                    'foo' => 'bar',
-                ]
-            );
+            ->assertExactJson([
+                'success' => true,
+                'score'   => 0.5,
+                'foo'     => 'bar',
+            ]);
     }
 
-    public function test_fakes_human_response_automatically()
+    public function test_fakes_human_response_automatically(): void
     {
         config(['captchavel.fake' => true]);
 
@@ -80,17 +106,17 @@ class ScoreMiddlewareTest extends TestCase
             ->assertOk()
             ->assertExactJson(
                 [
-                    'success' => true,
-                    'score' => 1,
-                    'action' => null,
-                    'hostname' => null,
+                    'success'          => true,
+                    'score'            => 1,
+                    'action'           => null,
+                    'hostname'         => null,
                     'apk_package_name' => null,
-                    'challenge_ts' => Carbon::now()->toAtomString(),
+                    'challenge_ts'     => Carbon::now()->toAtomString(),
                 ]
             );
     }
 
-    public function test_fakes_robot_response_if_input_is_robot_present()
+    public function test_fakes_robot_response_if_input_is_robot_present(): void
     {
         config(['captchavel.fake' => true]);
 
@@ -100,27 +126,25 @@ class ScoreMiddlewareTest extends TestCase
             ->assertOk()
             ->assertExactJson(
                 [
-                    'success' => true,
-                    'score' => 0,
-                    'action' => null,
-                    'hostname' => null,
+                    'success'          => true,
+                    'score'            => 0,
+                    'action'           => null,
+                    'hostname'         => null,
                     'apk_package_name' => null,
-                    'challenge_ts' => Carbon::now()->toAtomString(),
+                    'challenge_ts'     => Carbon::now()->toAtomString(),
                 ]
             );
     }
 
-    public function test_uses_custom_threshold()
+    public function test_uses_custom_threshold(): void
     {
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
-            (new ReCaptchaResponse(['success' => true, 'score' => 0.7, 'foo' => 'bar']))
-                ->setVersion(Captchavel::SCORE)
-                ->setAsResolved()
-        );
+                $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'foo' => 'bar'])
+            );
 
         $this->app['router']->post('test', function (ReCaptchaResponse $response) {
             return [$response->isHuman(), $response->isRobot(), $response->score];
@@ -131,16 +155,14 @@ class ScoreMiddlewareTest extends TestCase
             ->assertExactJson([true, false, 0.7]);
     }
 
-    public function test_uses_custom_input()
+    public function test_uses_custom_input(): void
     {
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, 'foo', null)
             ->andReturn(
-                (new ReCaptchaResponse(['success' => true, 'score' => 0.7, 'foo' => 'bar']))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'foo' => 'bar'])
             );
 
         $this->app['router']->post('test', function (ReCaptchaResponse $response) {
@@ -152,46 +174,44 @@ class ScoreMiddlewareTest extends TestCase
             ->assertExactJson(['success' => true, 'score' => 0.7, 'foo' => 'bar']);
     }
 
-    public function test_exception_when_token_absent()
+    public function test_exception_when_token_absent(): void
     {
         $this->post('v3/default', ['foo' => 'bar'])
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.error'))
             ->assertRedirect('/');
 
         $this->postJson('v3/default', ['foo' => 'bar'])
             ->assertJsonValidationErrors(Captchavel::INPUT);
     }
 
-    public function test_exception_when_response_invalid()
+    public function test_exception_when_response_invalid(): void
     {
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
-                (new ReCaptchaResponse(['success' => false, 'score' => 0.7, 'foo' => 'bar']))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(['success' => false, 'score' => 0.7, 'foo' => 'bar'])
             );
 
         $this->post('v3/default', [Captchavel::INPUT => 'token'])
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.error'))
             ->assertRedirect('/');
 
         $this->postJson('v3/default', ['foo' => 'bar'])
             ->assertJsonValidationErrors(Captchavel::INPUT);
     }
 
-    public function test_no_error_if_not_hostname_issued()
+    public function test_no_error_if_not_hostname_issued(): void
     {
         config(['captchavel.hostname' => null]);
 
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
-                (new ReCaptchaResponse(['success' => true, 'score' => 0.7, 'hostname' => 'foo']))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'hostname' => 'foo'])
             );
 
         $this->post('v3/default', [Captchavel::INPUT => 'token'])
@@ -201,18 +221,16 @@ class ScoreMiddlewareTest extends TestCase
             ->assertOk();
     }
 
-    public function test_no_error_if_hostname_same()
+    public function test_no_error_if_hostname_same(): void
     {
         config(['captchavel.hostname' => 'bar']);
 
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
-                (new ReCaptchaResponse(['success' => true, 'score' => 0.7, 'hostname' => 'bar']))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'hostname' => 'bar'])
             );
 
         $this->post('v3/default', [Captchavel::INPUT => 'token'])
@@ -222,39 +240,36 @@ class ScoreMiddlewareTest extends TestCase
             ->assertOk();
     }
 
-    public function test_exception_if_hostname_not_equal()
+    public function test_exception_if_hostname_not_equal(): void
     {
         config(['captchavel.hostname' => 'bar']);
 
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
-                (new ReCaptchaResponse(['success' => true, 'score' => 0.7, 'hostname' => 'foo']))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'hostname' => 'foo'])
             );
 
         $this->post('v3/default', [Captchavel::INPUT => 'token'])
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.match'))
             ->assertRedirect('/');
 
         $this->postJson('v3/default', [Captchavel::INPUT => 'token'])
-            ->assertJsonValidationErrors('hostname');
+            ->assertJsonValidationErrors(Captchavel::INPUT);
     }
 
-    public function test_no_error_if_no_apk_issued()
+    public function test_no_error_if_no_apk_issued(): void
     {
         config(['captchavel.apk_package_name' => null]);
 
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
-                (new ReCaptchaResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => 'foo']))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => 'foo'])
             );
 
         $this->post('v3/default', [Captchavel::INPUT => 'token'])
@@ -264,18 +279,16 @@ class ScoreMiddlewareTest extends TestCase
             ->assertOk();
     }
 
-    public function test_no_error_if_apk_same()
+    public function test_no_error_if_apk_same(): void
     {
         config(['captchavel.apk_package_name' => 'foo']);
 
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
-                (new ReCaptchaResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => 'foo']))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => 'foo'])
             );
 
         $this->post('v3/default', [Captchavel::INPUT => 'token'])
@@ -285,37 +298,34 @@ class ScoreMiddlewareTest extends TestCase
             ->assertOk();
     }
 
-    public function test_exception_if_apk_not_equal()
+    public function test_exception_if_apk_not_equal(): void
     {
         config(['captchavel.apk_package_name' => 'bar']);
 
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
-                (new ReCaptchaResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => null]))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => null])
             );
 
         $this->post('v3/default', [Captchavel::INPUT => 'token'])
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.match'))
             ->assertRedirect('/');
 
         $this->postJson('v3/default', [Captchavel::INPUT => 'token'])
-            ->assertJsonValidationErrors('apk_package_name');
+            ->assertJsonValidationErrors(Captchavel::INPUT);
     }
 
-    public function test_no_error_if_no_action()
+    public function test_no_error_if_no_action(): void
     {
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
-                (new ReCaptchaResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null]))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null])
             );
 
         $this->app['router']->post('test', function (ReCaptchaResponse $response) {
@@ -325,16 +335,14 @@ class ScoreMiddlewareTest extends TestCase
         $this->post('test', [Captchavel::INPUT => 'token'])->assertOk();
     }
 
-    public function test_no_error_if_action_same()
+    public function test_no_error_if_action_same(): void
     {
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, 'foo')
             ->andReturn(
-                (new ReCaptchaResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null]))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null])
             );
 
         $this->app['router']->post('test', function (ReCaptchaResponse $response) {
@@ -344,16 +352,18 @@ class ScoreMiddlewareTest extends TestCase
         $this->post('test', [Captchavel::INPUT => 'token'])->assertOk();
     }
 
-    public function test_exception_if_action_not_equal()
+    public function test_exception_if_action_not_equal(): void
     {
-        $mock = $this->mock(Captchavel::class);
+        $mock = $this->spy(Captchavel::class);
 
         $mock->shouldReceive('getChallenge')
-            ->with('token', '127.0.0.1', 'score')
+            ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, 'bar')
             ->andReturn(
-                (new ReCaptchaResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null]))
-                    ->setVersion(Captchavel::SCORE)
-                    ->setAsResolved()
+                $this->fulfilledResponse(
+                    ['success' => true, 'action' => 'foo', 'apk_package_name' => null],
+                    Captchavel::INPUT,
+                    'bar'
+                )
             );
 
         $this->app['router']->post(
@@ -363,40 +373,38 @@ class ScoreMiddlewareTest extends TestCase
             }
         )->middleware('recaptcha.score:null,bar');
 
-        $this->post('test', [Captchavel::INPUT => 'token'])->assertRedirect('/');
-        $this->postJson('test', [Captchavel::INPUT => 'token'])->assertJsonValidationErrors('action');
+        $this->post('test', [Captchavel::INPUT => 'token'])
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.match'))
+            ->assertRedirect('/');
+        $this->postJson('test', [Captchavel::INPUT => 'token'])
+            ->assertJsonValidationErrors(Captchavel::INPUT);
     }
 
-    public function test_checks_for_human_score()
+    public function test_checks_for_human_score(): void
     {
         config(['captchavel.credentials.score.secret' => 'secret']);
         config(['captchavel.fake' => false]);
 
         $mock = $this->mock(Factory::class);
 
+        $mock->shouldReceive('async')->withNoArgs()->times(4)->andReturnSelf();
         $mock->shouldReceive('asForm')->withNoArgs()->times(4)->andReturnSelf();
         $mock->shouldReceive('withOptions')->with(['version' => 2.0])->times(4)->andReturnSelf();
         $mock->shouldReceive('post')
             ->with(
                 Captchavel::RECAPTCHA_ENDPOINT,
                 [
-                    'secret' => 'secret',
+                    'secret'   => 'secret',
                     'response' => 'token',
                     'remoteip' => '127.0.0.1',
                 ]
             )
             ->times(4)
             ->andReturn(
-                new Response(
-                    new GuzzleResponse(
-                        200, ['Content-type' => 'application/json'], json_encode(
-                        [
-                            'success' => true,
-                            'score' => 0.5,
-                        ]
-                    )
-                    )
-                )
+                $this->fulfilledPromise([
+                    'success' => true,
+                    'score'   => 0.5,
+                ])
             );
 
         $this->app['router']->post(
