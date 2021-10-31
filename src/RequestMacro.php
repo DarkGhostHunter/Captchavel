@@ -4,6 +4,11 @@ namespace DarkGhostHunter\Captchavel;
 
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
 
+use function app;
+
+/**
+ * @internal
+ */
 class RequestMacro
 {
     /**
@@ -23,6 +28,6 @@ class RequestMacro
      */
     public static function isRobot(): bool
     {
-        return ! static::isHuman();
+        return !static::isHuman();
     }
 }

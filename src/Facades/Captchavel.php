@@ -6,7 +6,9 @@ use DarkGhostHunter\Captchavel\CaptchavelFake;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static \DarkGhostHunter\Captchavel\Captchavel getFacadeRoot()
+ * @method static \DarkGhostHunter\Captchavel\Captchavel|\DarkGhostHunter\Captchavel\CaptchavelFake getFacadeRoot()
+ * @method static bool isEnabled()
+ * @method static \DarkGhostHunter\Captchavel\Http\ReCaptchaResponse response()
  */
 class Captchavel extends Facade
 {
@@ -33,9 +35,9 @@ class Captchavel extends Facade
             return $instance;
         }
 
-        static::swap($fake = static::getFacadeApplication()->make(CaptchavelFake::class));
+        static::swap($instance = static::getFacadeApplication()->make(CaptchavelFake::class));
 
-        return $fake;
+        return $instance;
     }
 
     /**
@@ -45,7 +47,7 @@ class Captchavel extends Facade
      *
      * @return void
      */
-    public static function fakeScore(float $score)
+    public static function fakeScore(float $score): void
     {
         static::fake()->fakeScore($score);
     }
@@ -55,9 +57,9 @@ class Captchavel extends Facade
      *
      * @return void
      */
-    public static function fakeRobot()
+    public static function fakeRobot(): void
     {
-        static::fake()->fakeRobots();
+        static::fake()->fakeRobot();
     }
 
     /**
@@ -65,8 +67,8 @@ class Captchavel extends Facade
      *
      * @return void
      */
-    public static function fakeHuman()
+    public static function fakeHuman(): void
     {
-        static::fake()->fakeHumans();
+        static::fake()->fakeHuman();
     }
 }

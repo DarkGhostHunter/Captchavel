@@ -20,12 +20,12 @@ class CaptchavelFakeTest extends TestCase
         parent::setUp();
     }
 
-    public function test_using_fake_on_unit_test()
+    public function test_using_fake_on_unit_test(): void
     {
         static::assertTrue(config('captchavel.fake'));
     }
 
-    public function test_makes_fake_score()
+    public function test_makes_fake_score(): void
     {
         Captchavel::fakeScore(0.3);
 
@@ -36,7 +36,7 @@ class CaptchavelFakeTest extends TestCase
         $this->post('test')->assertOk()->assertExactJson([0.3, true, false]);
     }
 
-    public function test_makes_human_score_one()
+    public function test_makes_human_score_one(): void
     {
         Captchavel::fakeHuman();
 
@@ -47,7 +47,7 @@ class CaptchavelFakeTest extends TestCase
         $this->post('test')->assertOk()->assertExactJson([1.0, false, true]);
     }
 
-    public function test_makes_robot_score_zero()
+    public function test_makes_robot_score_zero(): void
     {
         Captchavel::fakeRobot();
 
