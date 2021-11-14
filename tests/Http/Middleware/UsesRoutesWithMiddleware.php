@@ -40,7 +40,13 @@ trait UsesRoutesWithMiddleware
             if (app()->has(ReCaptchaResponse::class)) {
                 return app(ReCaptchaResponse::class);
             }
-        })->middleware('recaptcha:checkbox,bar');
+        })->middleware('recaptcha:checkbox,null,bar');
+
+        $this->app['router']->post('v2/checkbox/remember', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:checkbox,10');
 
         $this->app['router']->post('v2/invisible', function () {
             if (app()->has(ReCaptchaResponse::class)) {
@@ -52,7 +58,13 @@ trait UsesRoutesWithMiddleware
             if (app()->has(ReCaptchaResponse::class)) {
                 return app(ReCaptchaResponse::class);
             }
-        })->middleware('recaptcha:invisible,bar');
+        })->middleware('recaptcha:invisible,null,bar');
+
+        $this->app['router']->post('v2/invisible/remember', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:invisible,10');
 
         $this->app['router']->post('v2/android', function () {
             if (app()->has(ReCaptchaResponse::class)) {
@@ -64,6 +76,12 @@ trait UsesRoutesWithMiddleware
             if (app()->has(ReCaptchaResponse::class)) {
                 return app(ReCaptchaResponse::class);
             }
-        })->middleware('recaptcha:android,bar');
+        })->middleware('recaptcha:android,null,bar');
+
+        $this->app['router']->post('v2/android/remember', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:android,10');
     }
 }

@@ -3,11 +3,15 @@
 namespace Tests\Http\Middleware;
 
 use DarkGhostHunter\Captchavel\Captchavel;
+use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
 use LogicException;
 use Orchestra\Testbench\TestCase;
 use Tests\CreatesFulfilledResponse;
 use Tests\RegistersPackage;
 
+use function app;
+use function config;
+use function now;
 use function trans;
 
 class ChallengeMiddlewareTest extends TestCase
@@ -37,7 +41,8 @@ class ChallengeMiddlewareTest extends TestCase
         $exception = $this->post('v2/score')->assertStatus(500)->exception;
 
         static::assertInstanceOf(LogicException::class, $exception);
-        static::assertSame('Use the [recaptcha.score] middleware to capture score-driven reCAPTCHA.', $exception->getMessage());
+        static::assertSame('Use the [recaptcha.score] middleware to capture score-driven reCAPTCHA.',
+            $exception->getMessage());
     }
 
     public function test_exception_if_no_challenge_specified(): void
@@ -59,8 +64,6 @@ class ChallengeMiddlewareTest extends TestCase
     public function test_bypass_if_not_enabled(): void
     {
         config(['captchavel.enable' => false]);
-
-        $this->spy(Captchavel::class)->shouldNotReceive('getChallenge');
 
         $this->post('v2/checkbox')->assertOk();
         $this->post('v2/invisible')->assertOk();
@@ -96,7 +99,7 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(3)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
@@ -120,7 +123,7 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(3)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
@@ -145,7 +148,7 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(12)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(12)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(12)->andReturnFalse();
 
         $mock->shouldNotReceive('getChallenge');
@@ -181,7 +184,7 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(6)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(6)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(6)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
@@ -214,7 +217,7 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(6)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(6)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(6)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
@@ -248,7 +251,7 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(3)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
@@ -274,7 +277,7 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(3)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
@@ -301,7 +304,7 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(6)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(6)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(6)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
@@ -337,12 +340,12 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(3)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
-            'success'  => true,
-            'foo'      => 'bar',
+            'success'          => true,
+            'foo'              => 'bar',
             'apk_package_name' => 'foo',
         ]);
 
@@ -364,12 +367,12 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(3)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
-            'success'  => true,
-            'foo'      => 'bar',
+            'success'          => true,
+            'foo'              => 'bar',
             'apk_package_name' => 'foo',
         ]);
 
@@ -391,12 +394,12 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isEnabled')->times(6)->andReturnTrue();
+        $mock->shouldReceive('isDisabled')->times(6)->andReturnFalse();
         $mock->shouldReceive('shouldFake')->times(6)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
-            'success'  => true,
-            'foo'      => 'bar',
+            'success'          => true,
+            'foo'              => 'bar',
             'apk_package_name' => 'foo',
         ]);
 
@@ -423,66 +426,484 @@ class ChallengeMiddlewareTest extends TestCase
 
     public function test_challenge_is_not_remembered_by_default(): void
     {
-        
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+
+        $response = $this->fulfilledResponse([
+            'success'          => true,
+            'foo'              => 'bar',
+            'apk_package_name' => 'foo',
+        ]);
+
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
+
+        $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionMissing('_recaptcha');
+        $this->post('v2/invisible', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionMissing('_recaptcha');
+        $this->post('v2/android', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionMissing('_recaptcha');
     }
 
     public function test_challenge_is_remembered_in_session(): void
     {
+        config(['captchavel.remember.enabled' => true]);
 
+        $this->travelTo($now = now());
+
+        $timestamp = $now->clone()->addMinutes(10)->getTimestamp();
+
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+
+        $response = $this->fulfilledResponse([
+            'success'          => true,
+            'foo'              => 'bar',
+        ]);
+
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
+
+        $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', $timestamp);
+
+        $this->flushSession();
+
+        $this->post('v2/invisible', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', $timestamp);
+
+        $this->flushSession();
+
+        $this->post('v2/android', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', $timestamp);
     }
 
-    public function test_challenge_is_remembered_in_session_when_config_overriden(): void
+    public function test_challenge_is_remembered_in_session_when_config_overridden(): void
     {
+        $this->travelTo($now = now());
 
+        $timestamp = $now->clone()->addMinutes(10)->getTimestamp();
+
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+
+        $response = $this->fulfilledResponse([
+            'success'          => true,
+            'foo'              => 'bar',
+        ]);
+
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
+
+        $this->post('v2/checkbox/remember', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', $timestamp);
+
+        $this->flushSession();
+
+        $this->post('v2/invisible/remember', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', $timestamp);
+
+        $this->flushSession();
+
+        $this->post('v2/android/remember', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', $timestamp);
+    }
+
+    public function test_challenge_is_remembered_in_session_using_custom_key(): void
+    {
+        config([
+            'captchavel.remember.enabled' => true,
+            'captchavel.remember.key' => 'foo',
+        ]);
+
+        $this->travelTo($now = now());
+
+        $timestamp = $now->clone()->addMinutes(10)->getTimestamp();
+
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+
+        $response = $this->fulfilledResponse([
+            'success'          => true,
+            'foo'              => 'bar',
+        ]);
+
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
+
+        $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('foo', $timestamp);
+
+        $this->flushSession();
+
+        $this->post('v2/invisible', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('foo', $timestamp);
+
+        $this->flushSession();
+
+        $this->post('v2/android', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('foo', $timestamp);
+    }
+
+    public function test_challenge_is_remembered_in_session_with_custom_key_when_config_overridden(): void
+    {
+        config([
+            'captchavel.remember.key' => 'foo',
+        ]);
+
+        $this->travelTo($now = now());
+
+        $timestamp = $now->clone()->addMinutes(10)->getTimestamp();
+
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+
+        $response = $this->fulfilledResponse([
+            'success'          => true,
+            'foo'              => 'bar',
+        ]);
+
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
+
+        $this->post('v2/checkbox/remember', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('foo', $timestamp);
+
+        $this->flushSession();
+
+        $this->post('v2/invisible/remember', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('foo', $timestamp);
+
+        $this->flushSession();
+
+        $this->post('v2/android/remember', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('foo', $timestamp);
     }
 
     public function test_challenge_is_remembered_forever(): void
     {
+        config([
+            'captchavel.remember.enabled' => true,
+            'captchavel.remember.minutes' => 0
+        ]);
 
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+
+        $response = $this->fulfilledResponse([
+            'success'          => true,
+            'foo'              => 'bar',
+        ]);
+
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
+
+        $this->app['router']->post('v2/checkbox/forever', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:checkbox');
+
+        $this->app['router']->post('v2/invisible/forever', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:invisible');
+
+
+        $this->app['router']->post('v2/android/forever', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:android');
+
+        $this->post('v2/checkbox/forever', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', 0);
+
+        $this->flushSession();
+
+        $this->post('v2/invisible/forever', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', 0);
+
+        $this->flushSession();
+
+        $this->post('v2/android/forever', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', 0);
     }
 
-    public function test_challenge_is_remembered_forever_when_config_overriden(): void
+    public function test_challenge_is_remembered_forever_when_config_overridden(): void
     {
+        $mock = $this->mock(Captchavel::class);
 
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+
+        $response = $this->fulfilledResponse([
+            'success'          => true,
+            'foo'              => 'bar',
+        ]);
+
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
+
+        $this->app['router']->post('v2/checkbox/forever', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:checkbox,0');
+
+        $this->app['router']->post('v2/invisible/forever', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:invisible,0');
+
+
+        $this->app['router']->post('v2/android/forever', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:android,0');
+
+        $this->post('v2/checkbox/forever', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', 0);
+
+        $this->flushSession();
+
+        $this->post('v2/invisible/forever', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', 0);
+
+        $this->flushSession();
+
+        $this->post('v2/android/forever', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', 0);
     }
 
     public function test_challenge_is_remembered_with_different_offset(): void
     {
+        config([
+            'captchavel.remember.enabled' => true,
+            'captchavel.remember.minutes' => 30
+        ]);
 
+        $this->travelTo($now = now());
+
+        $timestamp = $now->clone()->addMinutes(30)->getTimestamp();
+
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+
+        $response = $this->fulfilledResponse([
+            'success'          => true,
+            'foo'              => 'bar',
+        ]);
+
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
+
+        $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', $timestamp);
+
+        $this->flushSession();
+
+        $this->post('v2/invisible', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', $timestamp);
+
+        $this->flushSession();
+
+        $this->post('v2/android', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionHas('_recaptcha', $timestamp);
     }
 
-    public function test_challenge_is_not_remembered_when_config_overriden(): void
+    public function test_challenge_is_not_remembered_when_config_overridden(): void
     {
+        config([
+            'captchavel.remember.enabled' => true,
+        ]);
 
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+
+        $response = $this->fulfilledResponse([
+            'success'          => true,
+            'foo'              => 'bar',
+        ]);
+
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
+        $mock->shouldReceive('getChallenge')
+            ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
+
+        $this->app['router']->post('v2/checkbox/dont-remember', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:checkbox,false');
+
+        $this->app['router']->post('v2/invisible/dont-remember', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:invisible,false');
+
+        $this->app['router']->post('v2/android/dont-remember', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:android,false');
+
+        $this->post('v2/checkbox/dont-remember', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionMissing('_recaptcha');
+
+        $this->post('v2/invisible/dont-remember', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionMissing('_recaptcha');
+
+        $this->post('v2/android/dont-remember', [Captchavel::INPUT => 'token'])
+            ->assertOk()->assertSessionMissing('_recaptcha');
     }
 
     public function test_bypasses_check_if_session_has_remember_not_expired(): void
     {
+        config([
+            'captchavel.remember.enabled' => true,
+        ]);
 
+        $mock = $this->mock(Captchavel::class);
+
+        $this->session([
+            '_recaptcha' => now()->addMinute()->getTimestamp()
+        ]);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->shouldNotReceive('getChallenge');
+
+        $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])->assertOk();
+        $this->post('v2/invisible', [Captchavel::INPUT => 'token'])->assertOk();
+        $this->post('v2/android', [Captchavel::INPUT => 'token'])->assertOk();
     }
 
     public function test_bypasses_check_if_session_has_remember_forever(): void
     {
+        config([
+            'captchavel.remember.enabled' => true,
+        ]);
 
+        $mock = $this->mock(Captchavel::class);
+
+        $this->session([
+            '_recaptcha' => 0
+        ]);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->shouldNotReceive('getChallenge');
+
+        $this->post('v2/checkbox')->assertOk();
+        $this->post('v2/invisible')->assertOk();
+        $this->post('v2/android')->assertOk();
     }
 
     public function test_doesnt_bypasses_check_if_session_has_not_remember(): void
     {
+        config([
+            'captchavel.remember.enabled' => true,
+        ]);
 
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->shouldNotReceive('getChallenge');
+
+        $this->post('v2/checkbox')->assertSessionHasErrors();
+        $this->post('v2/invisible')->assertSessionHasErrors();
+        $this->post('v2/android')->assertSessionHasErrors();
     }
 
-    public function test_doesnt_bypasses_check_if_remember_disabled_when_config_overriden(): void
+    public function test_doesnt_bypasses_check_if_remember_disabled_when_config_overridden(): void
     {
+        config([
+            'captchavel.remember.enabled' => true,
+        ]);
 
-    }
+        $mock = $this->mock(Captchavel::class);
 
-    public function test_challenge_renewed_if_remember_present_and_disabled_when_config_overriden(): void
-    {
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->shouldNotReceive('getChallenge');
 
-    }
+        $this->app['router']->post('v2/checkbox/dont-remember', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:checkbox,false');
 
-    public function test_challenge_not_renewed_if_config_false_and_remember_present_and_disabled_when_config_overriden(): void
-    {
+        $this->app['router']->post('v2/invisible/dont-remember', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:invisible,false');
 
+        $this->app['router']->post('v2/android/dont-remember', function () {
+            if (app()->has(ReCaptchaResponse::class)) {
+                return app(ReCaptchaResponse::class);
+            }
+        })->middleware('recaptcha:android,false');
+
+        $this->post('v2/checkbox/dont-remember')->assertSessionHasErrors();
+        $this->post('v2/invisible/dont-remember')->assertSessionHasErrors();
+        $this->post('v2/android/dont-remember')->assertSessionHasErrors();
     }
 }

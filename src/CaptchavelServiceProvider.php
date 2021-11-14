@@ -9,6 +9,7 @@ use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\Compilers\BladeCompiler;
 
 /**
  * @internal
@@ -52,5 +53,9 @@ class CaptchavelServiceProvider extends ServiceProvider
 
         Request::macro('isRobot', [RequestMacro::class, 'isRobot']);
         Request::macro('isHuman', [RequestMacro::class, 'isHuman']);
+
+        $this->app->resolving('blade.compiler', static function (BladeCompiler $blade): void {
+            $blade->if('challenged', [Blade\Directives\Challenged::class, 'directive']);
+        });
     }
 }

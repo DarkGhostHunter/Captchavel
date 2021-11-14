@@ -12,6 +12,8 @@ use function implode;
 use function max;
 use function rtrim;
 
+use const DEBUG_BACKTRACE_IGNORE_ARGS;
+
 class ReCaptcha implements Stringable
 {
     /**
@@ -105,7 +107,7 @@ class ReCaptcha implements Stringable
     }
 
     /**
-     * Remembers any successful challenge made to bypass checking it on this route.
+     * Checking for a "remember" on this route.
      *
      * @param  int|null  $minutes
      * @return static
@@ -114,13 +116,13 @@ class ReCaptcha implements Stringable
     {
         $this->ensureVersionIsCorrect(true);
 
-        $this->minutes = (string) ($minutes ?? config('recaptcha.remember.minutes', 10));
+        $this->remember = (string) ($minutes ?? config('recaptcha.remember.minutes', 10));
 
         return $this;
     }
 
     /**
-     * Doesn't remembers any successful challenge to bypass checking it on this route.
+     * Bypass checking for a "remember" on this route.
      *
      * @return static
      */
@@ -128,7 +130,7 @@ class ReCaptcha implements Stringable
     {
         $this->ensureVersionIsCorrect(true);
 
-        $this->minutes = 'false';
+        $this->remember = 'false';
 
         return $this;
     }
@@ -165,11 +167,11 @@ class ReCaptcha implements Stringable
 
     /**
      * Throws an exception if this middleware version should be score or not.
-     * 
+     *
      * @param  bool  $score
      * @return void
      */
-    protected ensureVersionIsCorrect(bool $score): void
+    protected function ensureVersionIsCorrect(bool $score): void
     {
         if ($score ? $this->version === Captchavel::SCORE : $this->version !== Captchavel::SCORE) {
             $function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[1]['function'];
@@ -196,8 +198,8 @@ class ReCaptcha implements Stringable
     public function __toString(): string
     {
         $string = $this->version === Captchavel::SCORE
-            ? VerifyReCaptchaV3::SIGNATURE . ':' . implode(',', [$this->threshold, $this->action, $this->remember])
-            : VerifyReCaptchaV2::SIGNATURE . ':' . $this->version;
+            ? VerifyReCaptchaV3::SIGNATURE . ':' . implode(',', [$this->threshold, $this->action])
+            : VerifyReCaptchaV2::SIGNATURE . ':' . implode(',', [$this->version, $this->remember]);
 
         return rtrim($string . ',' . implode(',', [$this->input, implode(',', $this->guards)]), ',');
     }

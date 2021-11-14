@@ -67,7 +67,42 @@ Route::post('login', [LoginController::class, 'login'])->middleware('recaptcha:c
 
 When the validation fails, the user will be redirected back, or a JSON response will be returned with the validation errors.
 
-> You can change the input name from `g-recaptcha-response` to a custom using a second parameter, like `recaptcha.checkbox:my_input_name`.
+#### Remembering challenges
+
+To avoid a form asking for challenges over and over again, you can "remember" the challenge for a given set of minutes. This can be [enabled globally](#remember), but you may prefer to do it in a per-route basis.
+
+Simple set the minutes as second parameter on your middleware to **set** the "remember" once a challenge received is valid, or `0` to remember it forever. Using `null` will use the config default, while `false` will disable it for the route.
+
+```php
+use App\Http\Controllers\Auth\LoginController;
+
+Route::post('login', [LoginController::class, 'login'])
+     ->middleware('recaptcha:invisible,10');
+```
+
+> This only works on v2 challenges.
+
+You should use this in conjunction with the `@unlesschallenged` directive in your Blade templates to render a challenge when the user has not successfully done one before.
+
+```blade
+@unlesschallenged
+  <div class="g-recaptcha"
+       data-sitekey="{{ recaptcha('invisible') }}"
+       data-callback="onSubmit"
+       data-size="invisible">
+  </div>
+@endchallenged
+```
+
+#### Changing the input name
+
+You can change the input name from `g-recaptcha-response` to a custom using a third parameter.
+
+```php
+use App\Http\Controllers\Auth\LoginController;
+
+Route::post('login', [LoginController::class, 'login'])->middleware('recaptcha:checkbox,null,my_input_name');
+```
 
 ### Score-driven challenge
 
@@ -143,13 +178,15 @@ use DarkGhostHunter\Captchavel\ReCaptcha;
 use Illuminate\Support\Facades\Route
 
 Route::post('message/send', [MessageController::class, 'send'])
-    ->middleware(ReCaptcha::invisible()->except('user')->toString());
+    ->middleware(ReCaptcha::invisible()->except('user'));
 
 Route::post('comment/store', [CommentController::class, 'store'])
-    ->middleware(ReCaptcha::score(0.7)->action('comment.store')->except('admin', 'moderator')->toString());
+    ->middleware(ReCaptcha::score(0.7)->action('comment.store')->except('admin', 'moderator'));
 ```
 
-> Ensure you set the middleware as `->toString()` when using the helper to declare the middleware.
+> Cast the helper as a string if you're on [Laravel 8.70 or below](https://github.com/laravel/framework/releases/tag/v8.70.0).
+> 
+>     (string) ReCaptcha::invisible()->except('user')
 
 #### Faking reCAPTCHA scores 
 
@@ -212,6 +249,11 @@ return [
     'hostname'          => env('RECAPTCHA_HOSTNAME'),
     'apk_package_name'  => env('RECAPTCHA_APK_PACKAGE_NAME'),
     'threshold'         => 0.5,
+    'remember' => [
+        'enabled' => false,
+        'key'     => '_recaptcha',
+        'minutes' => 10,
+    ],
     'credentials'       => [
         // ...
     ]
@@ -272,6 +314,25 @@ return [
 Default threshold to check against reCAPTCHA v3 challenges. Values **equal or above** will be considered "human".
 
 If you're not using reCAPTCHA v3, or you're fine with the default, leave this alone. You can still [override the default in a per-route basis](#threshold-action-and-input-name).
+
+
+### Remember
+
+```php
+return [
+    'remember' => [
+        'enabled' => false,
+        'key'     => '_recaptcha',
+        'minutes' => 10,
+    ],
+];
+```
+
+This allows (or disables) remembering the user once a challenge is successful for v2 challenges.
+
+By default, is disabled globally. It's recommended to [use a per-route basis "remember"](#remembering-challenges) if you expect only some routes to remember challenges.
+
+This also control how many minutes to set the "remember". When zero, the "remember" will last until the session is destroyed or no longer valid. 
 
 ### Credentials
 

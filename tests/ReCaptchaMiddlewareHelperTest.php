@@ -14,23 +14,32 @@ class ReCaptchaMiddlewareHelperTest extends TestCase
 
     public function test_creates_full_recaptcha_v2_checkbox_string(): void
     {
-        static::assertEquals('recaptcha:checkbox,g-recaptcha-response', (string) ReCaptcha::checkbox());
-        static::assertEquals('recaptcha:checkbox,foo', (string) ReCaptcha::checkbox()->input('foo'));
-        static::assertEquals('recaptcha:checkbox,g-recaptcha-response,bar', (string) ReCaptcha::checkbox()->except('bar'));
+        static::assertEquals('recaptcha:checkbox,null,g-recaptcha-response', (string) ReCaptcha::checkbox());
+        static::assertEquals('recaptcha:checkbox,null,foo', (string) ReCaptcha::checkbox()->input('foo'));
+        static::assertEquals('recaptcha:checkbox,null,g-recaptcha-response,bar', (string) ReCaptcha::checkbox()->except('bar'));
+        static::assertEquals('recaptcha:checkbox,10,g-recaptcha-response,bar', (string) ReCaptcha::checkbox()->except('bar')->remember());
+        static::assertEquals('recaptcha:checkbox,20,g-recaptcha-response,bar', (string) ReCaptcha::checkbox()->except('bar')->remember(20));
+        static::assertEquals('recaptcha:checkbox,false,g-recaptcha-response,bar', (string) ReCaptcha::checkbox()->except('bar')->dontRemember());
     }
 
     public function test_creates_full_recaptcha_v2_invisible_string(): void
     {
-        static::assertEquals('recaptcha:invisible,g-recaptcha-response', (string) ReCaptcha::invisible());
-        static::assertEquals('recaptcha:invisible,foo', (string) ReCaptcha::invisible()->input('foo'));
-        static::assertEquals('recaptcha:invisible,g-recaptcha-response,bar', (string) ReCaptcha::invisible()->except('bar'));
+        static::assertEquals('recaptcha:invisible,null,g-recaptcha-response', (string) ReCaptcha::invisible());
+        static::assertEquals('recaptcha:invisible,null,foo', (string) ReCaptcha::invisible()->input('foo'));
+        static::assertEquals('recaptcha:invisible,null,g-recaptcha-response,bar', (string) ReCaptcha::invisible()->except('bar'));
+        static::assertEquals('recaptcha:invisible,10,g-recaptcha-response,bar', (string) ReCaptcha::invisible()->except('bar')->remember());
+        static::assertEquals('recaptcha:invisible,20,g-recaptcha-response,bar', (string) ReCaptcha::invisible()->except('bar')->remember(20));
+        static::assertEquals('recaptcha:invisible,false,g-recaptcha-response,bar', (string) ReCaptcha::invisible()->except('bar')->dontRemember());
     }
 
     public function test_creates_full_recaptcha_v2_android_string(): void
     {
-        static::assertEquals('recaptcha:android,g-recaptcha-response', (string) ReCaptcha::android());
-        static::assertEquals('recaptcha:android,foo', (string) ReCaptcha::android()->input('foo'));
-        static::assertEquals('recaptcha:android,g-recaptcha-response,bar', (string) ReCaptcha::android()->except('bar'));
+        static::assertEquals('recaptcha:android,null,g-recaptcha-response', (string) ReCaptcha::android());
+        static::assertEquals('recaptcha:android,null,foo', (string) ReCaptcha::android()->input('foo'));
+        static::assertEquals('recaptcha:android,null,g-recaptcha-response,bar', (string) ReCaptcha::android()->except('bar'));
+        static::assertEquals('recaptcha:android,10,g-recaptcha-response,bar', (string) ReCaptcha::android()->except('bar')->remember());
+        static::assertEquals('recaptcha:android,20,g-recaptcha-response,bar', (string) ReCaptcha::android()->except('bar')->remember(20));
+        static::assertEquals('recaptcha:android,false,g-recaptcha-response,bar', (string) ReCaptcha::android()->except('bar')->dontRemember());
     }
 
     public function test_exception_if_using_v3_methods_on_v2_checkbox(): void

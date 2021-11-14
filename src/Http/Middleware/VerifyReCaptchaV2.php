@@ -6,12 +6,13 @@ use Closure;
 use DarkGhostHunter\Captchavel\Captchavel;
 use DarkGhostHunter\Captchavel\Facades\Captchavel as CaptchavelFacade;
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
-use Illuminate\Container\Container;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Request;
 use LogicException;
 
 use function app;
 use function config;
+use function is_numeric;
 use function now;
 use function session;
 
@@ -31,6 +32,20 @@ class VerifyReCaptchaV2
     public const SIGNATURE = 'recaptcha';
 
     /**
+     * Application config.
+     *
+     * @var \Illuminate\Contracts\Config\Repository
+     */
+    protected Repository $config;
+
+    /**
+     * Captchavel instance.
+     *
+     * @var \DarkGhostHunter\Captchavel\Captchavel
+     */
+    protected Captchavel $captchavel;
+
+    /**
      * Handle the incoming request.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -40,7 +55,7 @@ class VerifyReCaptchaV2
      * @param  string  $input
      * @param  string  ...$guards
      * @return mixed
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws \Illuminate\Validation\ValidationException|\JsonException
      */
     public function handle(
         Request $request,
@@ -49,26 +64,24 @@ class VerifyReCaptchaV2
         string $remember = 'null',
         string $input = Captchavel::INPUT,
         string ...$guards
-    ): mixed
-    {
+    ): mixed {
         if ($version === Captchavel::SCORE) {
             throw new LogicException('Use the [recaptcha.score] middleware to capture score-driven reCAPTCHA.');
         }
 
-        [$shouldRemember, $offset] = $this->normalizeRemember($remember);
+        $this->config = config();
+        $this->captchavel = CaptchavelFacade::getFacadeRoot();
 
-        $captchavel = CaptchavelFacade::getFacadeRoot();
-
-        if ($captchavel->isEnabled() && $this->isGuest($guards) && !$shouldRemember && $this->hasNoRemember() && !$captchavel->shouldFake())) {
+        if ($this->shouldCheckReCaptcha($remember, $guards)) {
             $this->ensureChallengeIsPresent($request, $input = $this->normalizeInput($input));
 
             app()->instance(
                 ReCaptchaResponse::class,
-                $captchavel->getChallenge($request->input($input), $request->ip(), $version, $input)->wait()
+                $this->captchavel->getChallenge($request->input($input), $request->ip(), $version, $input)->wait()
             );
 
-            if ($shouldRemember && $this->shouldStoreRemember()) {
-                $this->storeRememberInSession($offset);
+            if ($this->shouldCheckRemember($remember)) {
+                $this->storeRememberInSession($remember);
             }
         }
 
@@ -76,63 +89,80 @@ class VerifyReCaptchaV2
     }
 
     /**
-     * Normalizes the "remember" parameter.
+     * Check if the reCAPTCHA should be checked for this request.
      *
      * @param  string  $remember
-     * @return array
+     * @param  array  $guards
+     * @return bool
      */
-    protected function normalizeRemember(string $remember): array
+    protected function shouldCheckReCaptcha(string $remember, array $guards): bool
     {
-        return $enabled = match($remember) {
-            'null'  => [config('recaptcha.remember.enabled', false), config('recaptcha.remember.minutes', 10)],
-            'false' => [false, 0],
-            'true'  => [true, config('recaptcha.remember.minutes', 10)],
-            default => [true, (int) $remember],
+        if ($this->captchavel->isDisabled()) {
+            return false;
         }
+
+        if ($this->captchavel->shouldFake()) {
+            return false;
+        }
+
+        if ($this->shouldCheckRemember($remember) && $this->hasRemember()) {
+            return false;
+        }
+
+        return $this->isGuest($guards);
     }
 
     /**
-     * Checks if the remember is disabled or has expired.
+     * Check if the "remember" should be checked.
+     *
+     * @param  string  $remember
+     * @return bool
+     */
+    protected function shouldCheckRemember(string $remember): bool
+    {
+        if ($remember === 'null') {
+            $remember = $this->config->get('captchavel.remember.enabled', false);
+        }
+
+        return !($remember === false || $remember === 'false');
+    }
+
+    /**
+     * Check if the request "remember" should be checked.
      *
      * @return bool
      */
-    protected function doesntRemember(): bool
+    protected function hasRemember(): bool
     {
-        $timestamp = session()->get(config('recaptcha.remember.key', '_recaptcha'));
+        $timestamp = session()->get($this->config->get('recaptcha.remember.key', '_recaptcha'));
 
-        // If we didn't find any remember data in the session.
         if ($timestamp === null) {
-            return true;
+            return false;
         }
 
-        // If the expiration is not forever and has expired.
-        return $timestamp !== 0 && now()->timestamp > $timestamp;
-    }
-
-    /**
-     * Check if the reCAPTCHA challenge should be remembered.
-     *
-     * @return bool
-     */
-    protected function shouldStoreRemember(): bool
-    {
-        return session()->missing(config('recaptcha.remember.key', '_recaptcha')) 
-            || config('recaptcha.remember.renew', false);
+        // Check the session has a "forever" expiration, or is not expired.
+        return !$timestamp || now()->timestamp < $timestamp;
     }
 
     /**
      * Stores the recaptcha remember expiration time in the session.
      *
-     * @param  int  $offset
+     * @param  string|int  $offset
      * @return void
      */
-    protected function storeRememberInSession(int $offset): void
+    protected function storeRememberInSession(string|int $offset): void
     {
-        // If the offset is over zero, we will set it as offset minutes.
-        if ($offset) {
-            $offset = now()->addMinutes($offset)->timestamp;
+        if (! is_numeric($offset)) {
+            $offset = $this->config->get('captchavel.remember.minutes', 10);
         }
 
-        session()->set(config('recaptcha.remember.key', '_recaptcha'), $offset);
+        $offset = (int) $offset;
+
+        // If the offset is over zero, we will set it as offset minutes.
+        if ($offset) {
+            $offset = now()->addMinutes($offset)->getTimestamp();
+        }
+
+        session()->put($this->config->get('captchavel.remember.key', '_recaptcha'), $offset);
     }
 }
