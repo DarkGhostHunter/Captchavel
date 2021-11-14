@@ -107,14 +107,14 @@ class ReCaptcha implements Stringable
     /**
      * Remembers any successful challenge made to bypass checking it on this route.
      *
-     * @param integer $minutes
+     * @param  int|null  $minutes
      * @return static
      */
-    public function remember(int $minutes): static
+    public function remember(int $minutes = null): static
     {
         $this->ensureVersionIsCorrect(true);
 
-        $this->minutes = (string) $minutes;
+        $this->minutes = (string) ($minutes ?? config('recaptcha.remember.minutes', 10));
 
         return $this;
     }
@@ -128,7 +128,7 @@ class ReCaptcha implements Stringable
     {
         $this->ensureVersionIsCorrect(true);
 
-        $this->minutes = 'null';
+        $this->minutes = 'false';
 
         return $this;
     }
