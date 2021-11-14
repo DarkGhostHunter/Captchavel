@@ -69,13 +69,14 @@ return [
     | for the user for a given number of minutes to avoid asking again.
     |
     | To remember the challenge until the session dies, set "minutes" to zero.
-    |
+    | To not refresh the remember on reCAPTCHA checks, set "renew" to false.
     */
 
     'remember' => [
         'enable'  => false,
         'key'     => '_recaptcha',
         'minutes' => 10,
+        'renew' => true,
     ]
 
     /*
