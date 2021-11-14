@@ -12,6 +12,8 @@ use function implode;
 use function max;
 use function rtrim;
 
+use const DEBUG_BACKTRACE_IGNORE_ARGS;
+
 class ReCaptcha implements Stringable
 {
     /**
@@ -21,6 +23,7 @@ class ReCaptcha implements Stringable
      * @param  string  $input
      * @param  string  $threshold
      * @param  string  $action
+     * @param  string  $remember
      * @param  string[]  $guards
      */
     public function __construct(
@@ -28,6 +31,7 @@ class ReCaptcha implements Stringable
         protected string $input = Captchavel::INPUT,
         protected string $threshold = 'null',
         protected string $action = 'null',
+        protected string $remember = 'null',
         protected array $guards = [],
     )
     {
@@ -103,6 +107,35 @@ class ReCaptcha implements Stringable
     }
 
     /**
+     * Checking for a "remember" on this route.
+     *
+     * @param  int|null  $minutes
+     * @return static
+     */
+    public function remember(int $minutes = null): static
+    {
+        $this->ensureVersionIsCorrect(true);
+
+        $this->remember = (string) ($minutes ?? config('recaptcha.remember.minutes', 10));
+
+        return $this;
+    }
+
+    /**
+     * Bypass checking for a "remember" on this route.
+     *
+     * @return static
+     */
+    public function dontRemember(): static
+    {
+        $this->ensureVersionIsCorrect(true);
+
+        $this->remember = 'false';
+
+        return $this;
+    }
+
+    /**
      * Sets the threshold for the score-driven challenge.
      *
      * @param  float  $threshold
@@ -110,9 +143,7 @@ class ReCaptcha implements Stringable
      */
     public function threshold(float $threshold): static
     {
-        if ($this->version !== Captchavel::SCORE) {
-            throw new LogicException("You cannot set [threshold] for a [$this->version] middleware.");
-        }
+        $this->ensureVersionIsCorrect(false);
 
         $this->threshold = number_format(max(0, min(1, $threshold)), 1);
 
@@ -127,13 +158,26 @@ class ReCaptcha implements Stringable
      */
     public function action(string $action): static
     {
-        if ($this->version !== Captchavel::SCORE) {
-            throw new LogicException("You cannot set [action] for a [$this->version] middleware.");
-        }
+        $this->ensureVersionIsCorrect(false);
 
         $this->action = $action;
 
         return $this;
+    }
+
+    /**
+     * Throws an exception if this middleware version should be score or not.
+     *
+     * @param  bool  $score
+     * @return void
+     */
+    protected function ensureVersionIsCorrect(bool $score): void
+    {
+        if ($score ? $this->version === Captchavel::SCORE : $this->version !== Captchavel::SCORE) {
+            $function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[1]['function'];
+
+            throw new LogicException("You cannot set [$function] for a [$this->version] middleware.");
+        }
     }
 
     /**
@@ -155,7 +199,7 @@ class ReCaptcha implements Stringable
     {
         $string = $this->version === Captchavel::SCORE
             ? VerifyReCaptchaV3::SIGNATURE . ':' . implode(',', [$this->threshold, $this->action])
-            : VerifyReCaptchaV2::SIGNATURE . ':' . $this->version;
+            : VerifyReCaptchaV2::SIGNATURE . ':' . implode(',', [$this->version, $this->remember]);
 
         return rtrim($string . ',' . implode(',', [$this->input, implode(',', $this->guards)]), ',');
     }

@@ -61,6 +61,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Remember V2 Challenge
+    |--------------------------------------------------------------------------
+    |
+    | Asking again and again for validation may become cumbersome when a form
+    | is expected to fail. You can globally remember successful challenges
+    | for the user for a given number of minutes to avoid asking again.
+    |
+    | To remember the challenge until the session dies, set "minutes" to zero.
+    */
+
+    'remember' => [
+        'enabled' => false,
+        'key'     => '_recaptcha',
+        'minutes' => 10,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Credentials
     |--------------------------------------------------------------------------
     |
