@@ -68,7 +68,7 @@ return [
     | is expected to fail. You can globally remember successful challenges
     | for the user for a given number of minutes to avoid asking again.
     |
-    | Setting "minutes" to zero/null will remember it until the session dies.
+    | To remember the challenge until the session dies, set "minutes" to zero.
     |
     */
 
