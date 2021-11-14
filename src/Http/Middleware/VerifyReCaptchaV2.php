@@ -55,11 +55,11 @@ class VerifyReCaptchaV2
             throw new LogicException('Use the [recaptcha.score] middleware to capture score-driven reCAPTCHA.');
         }
 
-        $remember = $this->normalizeRemember($remember);
+        [$shouldRemember, $offset] = $this->normalizeRemember($remember);
 
         $captchavel = CaptchavelFacade::getFacadeRoot();
 
-        if ($captchavel->isEnabled() && $this->isGuest($guards) && $this->doesntRemember($remember) && !$captchavel->shouldFake())) {
+        if ($captchavel->isEnabled() && $this->isGuest($guards) && !$shouldRemember && $this->hasNoRemember() && !$captchavel->shouldFake())) {
             $this->ensureChallengeIsPresent($request, $input = $this->normalizeInput($input));
 
             app()->instance(
@@ -67,8 +67,8 @@ class VerifyReCaptchaV2
                 $captchavel->getChallenge($request->input($input), $request->ip(), $version, $input)->wait()
             );
 
-            if ($this->shouldStoreRemember($remember)) {
-                $this->storeRememberInSession($remember);
+            if ($shouldRemember && $this->shouldStoreRemember()) {
+                $this->storeRememberInSession($offset);
             }
         }
 
@@ -79,32 +79,29 @@ class VerifyReCaptchaV2
      * Normalizes the "remember" parameter.
      *
      * @param  string  $remember
-     * @return bool|int
+     * @return array
      */
-    protected function normalizeRemember(string $remember): bool|int
+    protected function normalizeRemember(string $remember): array
     {
-        return match($remember) {
-            'null' => config('recaptcha.remember.enabled', false), // Get the config default.
-            'false' => false, // Disable any check.
-            default => (int) $remember; // Transform it to a minutes offset (zero means infinite).
+        return $enabled = match($remember) {
+            'null'  => [config('recaptcha.remember.enabled', false), config('recaptcha.remember.minutes', 10)],
+            'false' => [false, 0],
+            'true'  => [true, config('recaptcha.remember.minutes', 10)],
+            default => [true, (int) $remember],
         }
     }
 
     /**
      * Checks if the remember is disabled or has expired.
      *
-     * @param  null|bool|int  $remember
      * @return bool
      */
-    protected function doesntRemember(bool|int $remember): bool
+    protected function doesntRemember(): bool
     {
-        // If the remember is explicitely disabled, no remember is done.
-        if ($remember === false) {
-            return true;
-        }
+        $timestamp = session()->get(config('recaptcha.remember.key', '_recaptcha'));
 
-        // If we didn't find any remember data in the session either.
-        if (null === $timestamp = session()->get(config('recaptcha.remember.key', '_recaptcha')) {
+        // If we didn't find any remember data in the session.
+        if ($timestamp === null) {
             return true;
         }
 
@@ -115,13 +112,12 @@ class VerifyReCaptchaV2
     /**
      * Check if the reCAPTCHA challenge should be remembered.
      *
-     * @param  bool|int $remember
      * @return bool
      */
-    protected function shouldStoreRemember(bool|int $remember): bool
+    protected function shouldStoreRemember(): bool
     {
-        return $remember !== false
-            && (! session()->has(config('recaptcha.remember.key', '_recaptcha')) || config('recaptcha.remember.renew', false));
+        return session()->missing(config('recaptcha.remember.key', '_recaptcha')) 
+            || config('recaptcha.remember.renew', false);
     }
 
     /**
@@ -132,6 +128,11 @@ class VerifyReCaptchaV2
      */
     protected function storeRememberInSession(int $offset): void
     {
-        session()->set(config('recaptcha.remember.key', '_recaptcha'), $offset ?: now()->addMinutes($offset)->timestamp);
+        // If the offset is over zero, we will set it as offset minutes.
+        if ($offset) {
+            $offset = now()->addMinutes($offset)->timestamp;
+        }
+
+        session()->set(config('recaptcha.remember.key', '_recaptcha'), $offset);
     }
 }
