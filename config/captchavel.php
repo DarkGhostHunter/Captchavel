@@ -76,7 +76,7 @@ return [
         'enable'  => false,
         'key'     => '_recaptcha',
         'minutes' => 10,
-        'renew' => true,
+        'renew'   => true,
     ],
 
     /*
