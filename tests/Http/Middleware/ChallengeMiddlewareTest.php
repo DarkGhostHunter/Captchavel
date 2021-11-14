@@ -31,6 +31,7 @@ class ChallengeMiddlewareTest extends TestCase
     public function test_exception_if_declaring_v2_middleware_as_score(): void
     {
         $this->app['router']->post('v2/score', function () {
+            // ...
         })->middleware('recaptcha:score');
 
         $exception = $this->post('v2/score')->assertStatus(500)->exception;
@@ -418,5 +419,70 @@ class ChallengeMiddlewareTest extends TestCase
             ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.match'))
             ->assertRedirect('/');
         $this->postJson('v2/android', [Captchavel::INPUT => 'token'])->assertJsonValidationErrors(Captchavel::INPUT);
+    }
+
+    public function test_challenge_is_not_remembered_by_default(): void
+    {
+        
+    }
+
+    public function test_challenge_is_remembered_in_session(): void
+    {
+
+    }
+
+    public function test_challenge_is_remembered_in_session_when_config_overriden(): void
+    {
+
+    }
+
+    public function test_challenge_is_remembered_forever(): void
+    {
+
+    }
+
+    public function test_challenge_is_remembered_forever_when_config_overriden(): void
+    {
+
+    }
+
+    public function test_challenge_is_remembered_with_different_offset(): void
+    {
+
+    }
+
+    public function test_challenge_is_not_remembered_when_config_overriden(): void
+    {
+
+    }
+
+    public function test_bypasses_check_if_session_has_remember_not_expired(): void
+    {
+
+    }
+
+    public function test_bypasses_check_if_session_has_remember_forever(): void
+    {
+
+    }
+
+    public function test_doesnt_bypasses_check_if_session_has_not_remember(): void
+    {
+
+    }
+
+    public function test_doesnt_bypasses_check_if_remember_disabled_when_config_overriden(): void
+    {
+
+    }
+
+    public function test_challenge_renewed_if_remember_present_and_disabled_when_config_overriden(): void
+    {
+
+    }
+
+    public function test_challenge_not_renewed_if_config_false_and_remember_present_and_disabled_when_config_overriden(): void
+    {
+
     }
 }
