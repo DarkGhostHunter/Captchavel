@@ -124,7 +124,11 @@ class VerifyReCaptchaV2
             $remember = $this->config->get('captchavel.remember.enabled', false);
         }
 
-        return !($remember === false || $remember === 'false');
+        if ($remember === 'false') {
+            return false;
+        }
+
+        return $remember !== false;
     }
 
     /**
