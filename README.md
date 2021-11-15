@@ -60,7 +60,7 @@ To declare the middleware, use the `ReCaptcha` helper to ease your development p
 * `ReCaptcha::checkbox()` for explicitly rendered checkbox challenges.
 * `ReCaptcha::invisible()` for invisible challenges.
 * `ReCaptcha::android()` for Android app challenges.
-* 
+
 ```php
 use App\Http\Controllers\Auth\LoginController;
 use DarkGhostHunter\Captchavel\ReCaptcha;
