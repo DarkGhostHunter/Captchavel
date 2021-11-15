@@ -872,6 +872,25 @@ class ChallengeMiddlewareTest extends TestCase
         $this->post('v2/android')->assertSessionHasErrors();
     }
 
+    public function test_doesnt_bypasses_check_if_remember_has_expired_and_deletes_key(): void
+    {
+        config([
+            'captchavel.remember.enabled' => true,
+        ]);
+
+        $this->session(['_recaptcha' => now()->subSecond()->getTimestamp()]);
+
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
+        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->shouldNotReceive('getChallenge');
+
+        $this->post('v2/checkbox')->assertSessionHasErrors()->assertSessionMissing('_recaptcha');
+        $this->post('v2/invisible')->assertSessionHasErrors()->assertSessionMissing('_recaptcha');
+        $this->post('v2/android')->assertSessionHasErrors()->assertSessionMissing('_recaptcha');
+    }
+
     public function test_doesnt_bypasses_check_if_remember_disabled_when_config_overridden(): void
     {
         config([
