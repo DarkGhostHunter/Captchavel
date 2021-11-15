@@ -69,7 +69,7 @@ Route::post('login', [LoginController::class, 'login'])
      ->middleware(ReCaptcha::checkbox());
 ```
 
-> [Laravel 8.70 or below](https://github.com/laravel/framework/releases/tag/v8.70.0) need to cast the object as a string.
+> [Laravel 8.69 or below](https://github.com/laravel/framework/releases/tag/v8.70.0) need to cast the object as a string.
 
 #### Remembering challenges
 
