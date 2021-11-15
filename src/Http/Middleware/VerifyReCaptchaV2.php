@@ -138,14 +138,18 @@ class VerifyReCaptchaV2
      */
     protected function hasRemember(): bool
     {
-        $timestamp = session()->get($this->config->get('recaptcha.remember.key', '_recaptcha'));
+        $timestamp = session($key = $this->config->get('recaptcha.remember.key', '_recaptcha'));
 
-        if ($timestamp === null) {
-            return false;
+        if (is_numeric($timestamp)) {
+            if (!$timestamp || now()->timestamp < $timestamp) {
+                return true;
+            }
+
+            // Dispose of the session key if we have the opportunity when invalid.
+            session()->forget($key);
         }
 
-        // Check the session has a "forever" expiration, or is not expired.
-        return !$timestamp || now()->timestamp < $timestamp;
+        return false;
     }
 
     /**
