@@ -829,9 +829,9 @@ class ChallengeMiddlewareTest extends TestCase
         $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
         $mock->shouldNotReceive('getChallenge');
 
-        $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])->assertOk();
-        $this->post('v2/invisible', [Captchavel::INPUT => 'token'])->assertOk();
-        $this->post('v2/android', [Captchavel::INPUT => 'token'])->assertOk();
+        $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])->assertOk()->assertSessionHas('_recaptcha');
+        $this->post('v2/invisible', [Captchavel::INPUT => 'token'])->assertOk()->assertSessionHas('_recaptcha');
+        $this->post('v2/android', [Captchavel::INPUT => 'token'])->assertOk()->assertSessionHas('_recaptcha');
     }
 
     public function test_bypasses_check_if_session_has_remember_forever(): void
@@ -850,9 +850,9 @@ class ChallengeMiddlewareTest extends TestCase
         $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
         $mock->shouldNotReceive('getChallenge');
 
-        $this->post('v2/checkbox')->assertOk();
-        $this->post('v2/invisible')->assertOk();
-        $this->post('v2/android')->assertOk();
+        $this->post('v2/checkbox')->assertOk()->assertSessionHas('_recaptcha');
+        $this->post('v2/invisible')->assertOk()->assertSessionHas('_recaptcha');
+        $this->post('v2/android')->assertOk()->assertSessionHas('_recaptcha');
     }
 
     public function test_doesnt_bypasses_check_if_session_has_not_remember(): void
