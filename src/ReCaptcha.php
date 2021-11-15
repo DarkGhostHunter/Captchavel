@@ -4,13 +4,15 @@ namespace DarkGhostHunter\Captchavel;
 
 use DarkGhostHunter\Captchavel\Http\Middleware\VerifyReCaptchaV2;
 use DarkGhostHunter\Captchavel\Http\Middleware\VerifyReCaptchaV3;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use LogicException;
 use Stringable;
 
 use function config;
-use function implode;
 use function max;
-use function rtrim;
+
+use const DEBUG_BACKTRACE_IGNORE_ARGS;
 
 class ReCaptcha implements Stringable
 {
@@ -21,13 +23,15 @@ class ReCaptcha implements Stringable
      * @param  string  $input
      * @param  string  $threshold
      * @param  string  $action
+     * @param  string  $remember
      * @param  string[]  $guards
      */
     public function __construct(
         protected string $version,
-        protected string $input = Captchavel::INPUT,
+        protected string $input = 'null',
         protected string $threshold = 'null',
         protected string $action = 'null',
+        protected string $remember = 'null',
         protected array $guards = [],
     )
     {
@@ -103,6 +107,45 @@ class ReCaptcha implements Stringable
     }
 
     /**
+     * Checking for a "remember" on this route.
+     *
+     * @param  int|null  $minutes
+     * @return static
+     */
+    public function remember(int $minutes = null): static
+    {
+        $this->ensureVersionIsCorrect(true);
+
+        $this->remember = (string) ($minutes ?? config('recaptcha.remember.minutes', 10));
+
+        return $this;
+    }
+
+    /**
+     * Checking for a "remember" on this route and stores the key forever.
+     *
+     * @return $this
+     */
+    public function rememberForever(): static
+    {
+        return $this->remember(0);
+    }
+
+    /**
+     * Bypass checking for a "remember" on this route.
+     *
+     * @return static
+     */
+    public function dontRemember(): static
+    {
+        $this->ensureVersionIsCorrect(true);
+
+        $this->remember = 'false';
+
+        return $this;
+    }
+
+    /**
      * Sets the threshold for the score-driven challenge.
      *
      * @param  float  $threshold
@@ -110,9 +153,7 @@ class ReCaptcha implements Stringable
      */
     public function threshold(float $threshold): static
     {
-        if ($this->version !== Captchavel::SCORE) {
-            throw new LogicException("You cannot set [threshold] for a [$this->version] middleware.");
-        }
+        $this->ensureVersionIsCorrect(false);
 
         $this->threshold = number_format(max(0, min(1, $threshold)), 1);
 
@@ -127,13 +168,26 @@ class ReCaptcha implements Stringable
      */
     public function action(string $action): static
     {
-        if ($this->version !== Captchavel::SCORE) {
-            throw new LogicException("You cannot set [action] for a [$this->version] middleware.");
-        }
+        $this->ensureVersionIsCorrect(false);
 
         $this->action = $action;
 
         return $this;
+    }
+
+    /**
+     * Throws an exception if this middleware version should be score or not.
+     *
+     * @param  bool  $score
+     * @return void
+     */
+    protected function ensureVersionIsCorrect(bool $score): void
+    {
+        if ($score ? $this->version === Captchavel::SCORE : $this->version !== Captchavel::SCORE) {
+            $function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[1]['function'];
+
+            throw new LogicException("You cannot set [$function] for a [$this->version] middleware.");
+        }
     }
 
     /**
@@ -153,10 +207,28 @@ class ReCaptcha implements Stringable
      */
     public function __toString(): string
     {
-        $string = $this->version === Captchavel::SCORE
-            ? VerifyReCaptchaV3::SIGNATURE . ':' . implode(',', [$this->threshold, $this->action])
-            : VerifyReCaptchaV2::SIGNATURE . ':' . $this->version;
+        $declaration = $this->getBaseParameters()
+            ->reverse()
+            ->skipUntil(static function (string $parameter): bool {
+                return $parameter !== 'null';
+            })
+            ->reverse()
+            ->implode(',');
 
-        return rtrim($string . ',' . implode(',', [$this->input, implode(',', $this->guards)]), ',');
+        return Str::replaceFirst(',', ':', $declaration);
+    }
+
+    /**
+     * Returns the parameters as a collection.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    protected function getBaseParameters(): Collection
+    {
+        return Collection::make(
+            $this->version === Captchavel::SCORE
+                ? [VerifyReCaptchaV3::SIGNATURE, $this->threshold, $this->action]
+                : [VerifyReCaptchaV2::SIGNATURE, $this->version, $this->remember]
+        )->push($this->input, ...$this->guards);
     }
 }

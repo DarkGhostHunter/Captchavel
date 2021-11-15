@@ -55,33 +55,80 @@ Usage differs based on if you're using checkbox, invisible, or Android challenge
 
 After you integrate reCAPTCHA into your frontend or Android app, set the Captchavel middleware in the `POST` routes where a form with reCAPTCHA is submitted. The middleware will catch the `g-recaptcha-response` input (you can change it later) and check if it's valid.
 
-* `recaptcha:checkbox` for explicitly rendered checkbox challenges.
-* `recaptcha:invisible` for invisible challenges.
-* `recaptcha:android` for Android app challenges.
+To declare the middleware, use the `ReCaptcha` helper to ease your development pain:
+
+* `ReCaptcha::checkbox()` for explicitly rendered checkbox challenges.
+* `ReCaptcha::invisible()` for invisible challenges.
+* `ReCaptcha::android()` for Android app challenges.
+* 
+```php
+use App\Http\Controllers\Auth\LoginController;
+use DarkGhostHunter\Captchavel\ReCaptcha;
+
+Route::post('login', [LoginController::class, 'login'])
+     ->middleware(ReCaptcha::checkbox());
+```
+
+> [Laravel 8.70 or below](https://github.com/laravel/framework/releases/tag/v8.70.0) need to cast the object as a string.
+
+#### Remembering challenges
+
+To avoid a form asking for challenges over and over again, you can "remember" the challenge for a given set of minutes. This can be [enabled globally](#remember), but you may prefer to do it in a per-route basis.
+
+Simple use the `remember()` method to use the config defaults. It accepts the number of minutes to override the amount of time to remember the challenge. Alternatively, `rememberForever()` will remember the challenge forever.
 
 ```php
 use App\Http\Controllers\Auth\LoginController;
+use DarkGhostHunter\Captchavel\ReCaptcha;
 
-Route::post('login', [LoginController::class, 'login'])->middleware('recaptcha:checkbox');
+Route::post('login', [LoginController::class, 'login'])
+     ->middleware(ReCaptcha::invisible()->remember());
+
+Route::post('message', [ChatController::class, 'login'])
+     ->middleware(ReCaptcha::checkbox()->rememberForever());
 ```
 
-When the validation fails, the user will be redirected back, or a JSON response will be returned with the validation errors.
+You should use this in conjunction with the `@unlesschallenged` directive in your Blade templates to render a challenge when the user has not successfully done one before.
 
-> You can change the input name from `g-recaptcha-response` to a custom using a second parameter, like `recaptcha.checkbox:my_input_name`.
+```blade
+@unlesschallenged
+  <div class="g-recaptcha"
+       data-sitekey="{{ recaptcha('invisible') }}"
+       data-callback="onSubmit"
+       data-size="invisible">
+  </div>
+@endchallenged
+```
+
+Good places to remember a challenge for some minutes are forms which are expected to fail, or when you have multiple forms the user may jump between.
+
+#### Changing the input name
+
+You can change the input name from `g-recaptcha-response`, which is the default, with `input()`.
+
+```php
+use App\Http\Controllers\Auth\LoginController;
+use DarkGhostHunter\Captchavel\ReCaptcha;
+
+Route::post('login', [LoginController::class, 'login'])
+     ->middleware(ReCaptcha::checkbox()->input('recaptcha_input'));
+```
 
 ### Score-driven challenge
 
 The reCAPTCHA v3 middleware works differently from v2. This is a score-driven response is _always_ a success, but the challenge scores between `0.0` and `1.0`. Human-like interaction will be higher, while robots will score lower. The default threshold is `0.5`, but this can be changed globally or per-route.
 
-To start using it, simply add the `recaptcha.score` middleware to your route:
+To start using it, simply use the `ReCaptcha::score()` method to your route.
 
 ```php
 use App\Http\Controllers\CommentController;
+use DarkGhostHunter\Captchavel\ReCaptcha;
 
-Route::post('comment', [CommentController::class, 'create'])->middleware('recaptcha.score');
+Route::post('comment', [CommentController::class, 'create'])
+     ->middleware(ReCaptcha::score());
 ```
 
-Once the challenge has been received, you will have access to two methods from the Request class or instance: `isHuman()` and `isRobot()`, which return `true` or `false`:
+Once the challenge has been received in your controller, you will have access to two methods from the Request class or instance: `isHuman()` and `isRobot()`, which return `true` or `false`:
 
 ```php
 public function store(Request $request, Post $post)
@@ -115,26 +162,24 @@ if ($response->score > 0.2) {
 
 #### Threshold, action and input name
 
-The middleware accepts three additional parameters in the following order:
+The middleware accepts three additional parameters using the middleware helper.
 
-1. Threshold: Values **above or equal** are considered human.
-2. Action: The action name to optionally check against.
-3. Input: The name of the reCAPTCHA input to verify.
+1. `threshold()`: The value that must be **above or equal** to be considered human.
+2. `action()`: The action name to optionally check against.
+3. `input()`: The name of the reCAPTCHA input to verify.
 
 ```php
-use App\Http\Controllers\CommentController;
+use App\Http\Controllers\CommentController;use DarkGhostHunter\Captchavel\ReCaptcha;
 
 Route::post('comment', [CommentController::class, 'create'])
-    ->middleware('recaptcha.score:0.7,login,custom-recaptcha-input');
+     ->middleware(ReCaptcha::score()->threshold(0.7)->action('post-comment')->input('my_score_input');
 ```
 
 > When checking the action name, ensure your frontend action matches with the expected in the middleware.
 
 #### Bypassing on authenticated users
 
-Sometimes you may want to bypass reCAPTCHA checks on authenticated user, or automatically receive it as a "human" on score-driven challenges. While in your frontend you can programmatically disable reCAPTCHA when the user is authenticated, on the backend you can specify the guards to check as the last middleware parameters.
-
-Since having a lot of arguments on a middleware can quickly become spaghetti code, use the `ReCaptcha` helper to declare it using fluid methods.
+Sometimes you may want to bypass reCAPTCHA checks on authenticated user, or automatically receive it as a "human" on score-driven challenges. While in your frontend you can programmatically disable reCAPTCHA when the user is authenticated, on the backend you can specify the guards using `except()`.
 
 ```php
 use App\Http\Controllers\CommentController;
@@ -143,13 +188,11 @@ use DarkGhostHunter\Captchavel\ReCaptcha;
 use Illuminate\Support\Facades\Route
 
 Route::post('message/send', [MessageController::class, 'send'])
-    ->middleware(ReCaptcha::invisible()->except('user')->toString());
+     ->middleware(ReCaptcha::invisible()->except('user'));
 
 Route::post('comment/store', [CommentController::class, 'store'])
-    ->middleware(ReCaptcha::score(0.7)->action('comment.store')->except('admin', 'moderator')->toString());
+     ->middleware(ReCaptcha::score(0.7)->action('comment.store')->except('admin', 'moderator'));
 ```
-
-> Ensure you set the middleware as `->toString()` when using the helper to declare the middleware.
 
 #### Faking reCAPTCHA scores 
 
@@ -212,6 +255,11 @@ return [
     'hostname'          => env('RECAPTCHA_HOSTNAME'),
     'apk_package_name'  => env('RECAPTCHA_APK_PACKAGE_NAME'),
     'threshold'         => 0.5,
+    'remember' => [
+        'enabled' => false,
+        'key'     => '_recaptcha',
+        'minutes' => 10,
+    ],
     'credentials'       => [
         // ...
     ]
@@ -230,7 +278,7 @@ return [
 
 By default, Captchavel is disabled, so it doesn't check reCAPTCHA challenges, and on score-driven routes, it will always resolve as human interaction.
 
-You can forcefully enable it with the `CAPTCHAVEL_ENABLE` environment variable.
+You can enable it with the `CAPTCHAVEL_ENABLE` environment variable.
 
 ```dotenv
 CAPTCHAVEL_ENABLE=true
@@ -246,7 +294,7 @@ This can be handy to enable on some local or development environments to check r
 CAPTCHAVEL_FAKE=true
 ```
 
-If Captchavel is [enabled](#enable-switch), setting this to true will allow your application to [fake v3-score responses from reCAPTCHA servers](#faking-recaptcha-scores).
+If Captchavel is [enabled](#enable-switch), setting this to true will allow your application to [fake v3-score responses from reCAPTCHA servers](#faking-recaptcha-scores). For v2 challenges, setting this to `true` bypasses the challenge verification.
 
 > This is automatically set to `true` when [running unit tests](#testing-score-with-captchavel).
 
@@ -257,7 +305,7 @@ RECAPTCHA_HOSTNAME=myapp.com
 RECAPTCHA_APK_PACKAGE_NAME=my.package.name
 ```
 
-If you are not verifying the Hostname or APK Package Name in your [reCAPTCHA Admin Panel](https://www.google.com/recaptcha/admin/), you will have to issue them in the environment file. 
+If you are not verifying the Hostname or APK Package Name in your [reCAPTCHA Admin Panel](https://www.google.com/recaptcha/admin/), may be because you use multiple hostnames or apps, you will have to issue them in the environment file.
 
 When the reCAPTCHA response from the servers is retrieved, it will be checked against these values when present. In case of mismatch, a validation exception will be thrown.
 
@@ -269,9 +317,27 @@ return [
 ];
 ```
 
-Default threshold to check against reCAPTCHA v3 challenges. Values **equal or above** will be considered "human".
+The default threshold to check against reCAPTCHA v3 challenges. Values **equal or above** will be considered "human".
 
 If you're not using reCAPTCHA v3, or you're fine with the default, leave this alone. You can still [override the default in a per-route basis](#threshold-action-and-input-name).
+
+### Remember
+
+```php
+return [
+    'remember' => [
+        'enabled' => false,
+        'key'     => '_recaptcha',
+        'minutes' => 10,
+    ],
+];
+```
+
+This allows (or disables) remembering the user once a v2 challenge is successful. It's disabled by default.
+
+It's recommended to [use a per-route basis "remember"](#remembering-challenges) if you expect only some routes to remember challenges.
+
+This also control how many minutes to set the "remember". When zero, the "remember" will last until the session is destroyed or no longer valid. 
 
 ### Credentials
 
@@ -287,9 +353,9 @@ Here is the full array of [reCAPTCHA credentials](#set-up) to use depending on t
 
 ## Testing Score with Captchavel
 
-On testing, when Captchavel is disabled, routes set with the v2 middleware won't need to input the challenge in their body as it will be not verified.
+On testing, when Captchavel is disabled or enabled but faked, routes set with the v2 middleware won't need to input the challenge in their body as it will be not verified.
 
-On the other hand, reCAPTCHA v3 (score) responses [are always faked](#fake-responses) as humans, even if [Captchavel is disabled](#enable-switch). This guarantees you can always access the response in your controller.
+reCAPTCHA v3 (score) responses [are always faked](#fake-responses) as humans, even if [Captchavel is disabled](#enable-switch). This guarantees you can always access the response in your controller.
 
 To modify the score in your tests, you should [enable faking](#fake-responses) on your tests through the `.env.testing` environment file, or in [PHPUnit environment section](https://phpunit.readthedocs.io/en/9.5/configuration.html?highlight=environment#the-env-element). If you use another testing framework, refer to its documentation.
 
@@ -297,6 +363,7 @@ To modify the score in your tests, you should [enable faking](#fake-responses) o
 <phpunit>
     <!-- ... -->
     <php>
+        <env name="CAPTCHAVEL_ENABLE" value="true"/>
         <env name="CAPTCHAVEL_FAKE" value="true"/>
     </php>
 </phpunit>
@@ -307,9 +374,9 @@ Alternatively, you can change the configuration before your unit test:
 ```php
 public function test_this_route()
 {
-    config()->set('captchavel.fake', true);
+    $this->app['config']->set('captchavel.fake', true);
     
-    // ...
+    // Do some testing...
 }
 ```
 
