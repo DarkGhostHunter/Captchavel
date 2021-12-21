@@ -10,7 +10,6 @@ use Illuminate\Http\Client\Factory;
 use LogicException;
 use Mockery;
 use Orchestra\Testbench\TestCase;
-
 use function app;
 
 class CaptchavelTest extends TestCase
@@ -22,10 +21,10 @@ class CaptchavelTest extends TestCase
     {
         $mock = $this->mock(Factory::class);
 
-        $mock->shouldReceive('asForm')->withNoArgs()->once()->andReturnSelf();
-        $mock->shouldReceive('async')->withNoArgs()->once()->andReturnSelf();
-        $mock->shouldReceive('withOptions')->with(['version' => 2.0])->once()->andReturnSelf();
-        $mock->shouldReceive('post')
+        $mock->expects('asForm')->withNoArgs()->once()->andReturnSelf();
+        $mock->expects('async')->withNoArgs()->once()->andReturnSelf();
+        $mock->expects('withOptions')->with(['version' => 2.0])->once()->andReturnSelf();
+        $mock->expects('post')
             ->with(
                 Captchavel::RECAPTCHA_ENDPOINT,
                 [
@@ -53,10 +52,10 @@ class CaptchavelTest extends TestCase
     {
         $mock = $this->mock(Factory::class);
 
-        $mock->shouldReceive('asForm')->withNoArgs()->times(3)->andReturnSelf();
-        $mock->shouldReceive('async')->withNoArgs()->times(3)->andReturnSelf();
-        $mock->shouldReceive('withOptions')->with(['version' => 2.0])->times(3)->andReturnSelf();
-        $mock->shouldReceive('post')
+        $mock->expects('asForm')->withNoArgs()->times(3)->andReturnSelf();
+        $mock->expects('async')->withNoArgs()->times(3)->andReturnSelf();
+        $mock->expects('withOptions')->with(['version' => 2.0])->times(3)->andReturnSelf();
+        $mock->expects('post')
             ->with(
                 Captchavel::RECAPTCHA_ENDPOINT,
                 [
@@ -109,11 +108,11 @@ class CaptchavelTest extends TestCase
 
         $mock = $this->mock(Factory::class);
 
-        $mock->shouldReceive('asForm')->withNoArgs()->times(3)->andReturnSelf();
-        $mock->shouldReceive('async')->withNoArgs()->times(3)->andReturnSelf();
-        $mock->shouldReceive('withOptions')->with(['version' => 2.0])->times(3)->andReturnSelf();
+        $mock->expects('asForm')->withNoArgs()->times(3)->andReturnSelf();
+        $mock->expects('async')->withNoArgs()->times(3)->andReturnSelf();
+        $mock->expects('withOptions')->with(['version' => 2.0])->times(3)->andReturnSelf();
 
-        $mock->shouldReceive('post')
+        $mock->expects('post')
             ->with(
                 Captchavel::RECAPTCHA_ENDPOINT,
                 [
@@ -130,7 +129,7 @@ class CaptchavelTest extends TestCase
                 ])
             );
 
-        $mock->shouldReceive('post')
+        $mock->expects('post')
             ->with(
                 Captchavel::RECAPTCHA_ENDPOINT,
                 [
@@ -147,7 +146,7 @@ class CaptchavelTest extends TestCase
                 ])
             );
 
-        $mock->shouldReceive('post')
+        $mock->expects('post')
             ->with(
                 Captchavel::RECAPTCHA_ENDPOINT,
                 [
@@ -202,10 +201,10 @@ class CaptchavelTest extends TestCase
 
         $mock = $this->mock(Factory::class);
 
-        $mock->shouldReceive('asForm')->withNoArgs()->once()->andReturnSelf();
-        $mock->shouldReceive('async')->withNoArgs()->once()->andReturnSelf();
-        $mock->shouldReceive('withOptions')->with(['version' => 2.0])->once()->andReturnSelf();
-        $mock->shouldReceive('post')
+        $mock->expects('asForm')->withNoArgs()->once()->andReturnSelf();
+        $mock->expects('async')->withNoArgs()->once()->andReturnSelf();
+        $mock->expects('withOptions')->with(['version' => 2.0])->once()->andReturnSelf();
+        $mock->expects('post')
             ->with(Captchavel::RECAPTCHA_ENDPOINT, [
                 'secret'   => 'secret',
                 'response' => 'token',

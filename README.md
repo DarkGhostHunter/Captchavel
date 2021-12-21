@@ -60,7 +60,7 @@ To declare the middleware, use the `ReCaptcha` helper to ease your development p
 * `ReCaptcha::checkbox()` for explicitly rendered checkbox challenges.
 * `ReCaptcha::invisible()` for invisible challenges.
 * `ReCaptcha::android()` for Android app challenges.
-* 
+
 ```php
 use App\Http\Controllers\Auth\LoginController;
 use DarkGhostHunter\Captchavel\ReCaptcha;
@@ -69,13 +69,13 @@ Route::post('login', [LoginController::class, 'login'])
      ->middleware(ReCaptcha::checkbox());
 ```
 
-> [Laravel 8.70 or below](https://github.com/laravel/framework/releases/tag/v8.70.0) need to cast the object as a string.
+> [Laravel 8.69 or below](https://github.com/laravel/framework/releases/tag/v8.70.0) need to cast the object as a string.
 
 #### Remembering challenges
 
 To avoid a form asking for challenges over and over again, you can "remember" the challenge for a given set of minutes. This can be [enabled globally](#remember), but you may prefer to do it in a per-route basis.
 
-Simple use the `remember()` method to use the config defaults. It accepts the number of minutes to override the amount of time to remember the challenge. Alternatively, `rememberForever()` will remember the challenge forever.
+Simple use the `remember()` method to use the config defaults. It accepts the number of minutes to override the [global parameter](#remember). Alternatively, `rememberForever()` will remember the challenge forever.
 
 ```php
 use App\Http\Controllers\Auth\LoginController;
@@ -100,11 +100,11 @@ You should use this in conjunction with the `@unlesschallenged` directive in you
 @endchallenged
 ```
 
-Good places to remember a challenge for some minutes are forms which are expected to fail, or when you have multiple forms the user may jump between.
+> Good places to remember a challenge for some minutes are forms which are expected to fail, or when you have multiple forms the user may jump between.
 
 #### Changing the input name
 
-You can change the input name from `g-recaptcha-response`, which is the default, with `input()`.
+You can change the input name from `g-recaptcha-response`, which is the default, to anything using `input()`.
 
 ```php
 use App\Http\Controllers\Auth\LoginController;
@@ -116,7 +116,7 @@ Route::post('login', [LoginController::class, 'login'])
 
 ### Score-driven challenge
 
-The reCAPTCHA v3 middleware works differently from v2. This is a score-driven response is _always_ a success, but the challenge scores between `0.0` and `1.0`. Human-like interaction will be higher, while robots will score lower. The default threshold is `0.5`, but this can be changed globally or per-route.
+The reCAPTCHA v3 middleware works differently from v2. This response is _always_ a success, but the challenge scores between `0.0` and `1.0`. Human-like interaction will be higher, while robots will score lower. The default threshold is `0.5`, but this can be changed globally or per-route.
 
 To start using it, simply use the `ReCaptcha::score()` method to your route.
 
@@ -179,7 +179,7 @@ Route::post('comment', [CommentController::class, 'create'])
 
 #### Bypassing on authenticated users
 
-Sometimes you may want to bypass reCAPTCHA checks on authenticated user, or automatically receive it as a "human" on score-driven challenges. While in your frontend you can programmatically disable reCAPTCHA when the user is authenticated, on the backend you can specify the guards using `except()`.
+Sometimes you may want to bypass reCAPTCHA checks when there is an authenticated user, or automatically receive it as a "human" on score-driven challenges. While in your frontend you can programmatically disable reCAPTCHA when the user is authenticated, on the routes you can specify the guards to bypass using `except()`.
 
 ```php
 use App\Http\Controllers\CommentController;
@@ -196,7 +196,7 @@ Route::post('comment/store', [CommentController::class, 'store'])
 
 #### Faking reCAPTCHA scores 
 
-You can easily fake a reCAPTCHA response scores in your local development by setting `CAPTCHAVEL_FAKE` to `true`.
+You can easily fake a reCAPTCHA response score in your local development by setting `CAPTCHAVEL_FAKE` to `true`.
 
 ```dotenv
 CAPTCHAVEL_FAKE=true
@@ -333,11 +333,11 @@ return [
 ];
 ```
 
-This allows (or disables) remembering the user once a v2 challenge is successful. It's disabled by default.
+Remembering the user once a V2 challenge is successful is disabled by default.
 
-It's recommended to [use a per-route basis "remember"](#remembering-challenges) if you expect only some routes to remember challenges.
+It's recommended to [use a per-route basis "remember"](#remembering-challenges) if you expect only some routes to remember challenges, instead of the whole application.
 
-This also control how many minutes to set the "remember". When zero, the "remember" will last until the session is destroyed or no longer valid. 
+This also control how many minutes to set the "remember". When zero, the "remember" will last until the session is destroyed or no longer valid.
 
 ### Credentials
 
