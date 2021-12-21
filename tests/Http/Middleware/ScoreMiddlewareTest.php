@@ -183,6 +183,16 @@ class ScoreMiddlewareTest extends TestCase
             ->assertJsonValidationErrors(Captchavel::INPUT);
     }
 
+    public function test_exception_when_token_null(): void
+    {
+        $this->post('v3/default', [Captchavel::INPUT => null])
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.error'))
+            ->assertRedirect('/');
+
+        $this->postJson('v3/default', [Captchavel::INPUT => null])
+            ->assertJsonValidationErrors(Captchavel::INPUT);
+    }
+
     public function test_exception_when_response_invalid(): void
     {
         $mock = $this->spy(Captchavel::class);
