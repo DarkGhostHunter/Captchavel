@@ -8,7 +8,6 @@ use LogicException;
 use Orchestra\Testbench\TestCase;
 use Tests\CreatesFulfilledResponse;
 use Tests\RegistersPackage;
-
 use function app;
 use function config;
 use function now;
@@ -99,19 +98,19 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success' => true,
             'foo'     => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')->once()
+        $mock->expects('getChallenge')->once()
             ->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')->once()
+        $mock->expects('getChallenge')->once()
             ->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')->once()
+        $mock->expects('getChallenge')->once()
             ->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])->assertOk();
@@ -123,8 +122,8 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success' => true,
@@ -132,11 +131,11 @@ class ChallengeMiddlewareTest extends TestCase
             'foo'     => 'bar',
         ], 'bar');
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', 'bar')->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', 'bar')->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', 'bar')->andReturn($response);
 
         $this->post('v2/checkbox/input_bar', ['bar' => 'token'])->assertOk();
@@ -148,8 +147,8 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(12)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(12)->andReturnFalse();
+        $mock->expects('isDisabled')->times(12)->andReturnFalse();
+        $mock->expects('shouldFake')->times(12)->andReturnFalse();
 
         $mock->shouldNotReceive('getChallenge');
 
@@ -184,19 +183,19 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(6)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(6)->andReturnFalse();
+        $mock->expects('isDisabled')->times(6)->andReturnFalse();
+        $mock->expects('shouldFake')->times(6)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success' => false,
             'foo'     => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
@@ -217,18 +216,18 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(6)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(6)->andReturnFalse();
+        $mock->expects('isDisabled')->times(6)->andReturnFalse();
+        $mock->expects('shouldFake')->times(6)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'foo' => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
@@ -251,19 +250,19 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success' => true,
             'foo'     => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])->assertOk();
@@ -277,8 +276,8 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'  => true,
@@ -286,11 +285,11 @@ class ChallengeMiddlewareTest extends TestCase
             'hostname' => 'foo',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])->assertOk();
@@ -304,8 +303,8 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(6)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(6)->andReturnFalse();
+        $mock->expects('isDisabled')->times(6)->andReturnFalse();
+        $mock->expects('shouldFake')->times(6)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'  => true,
@@ -313,11 +312,11 @@ class ChallengeMiddlewareTest extends TestCase
             'hostname' => 'foo',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
@@ -340,8 +339,8 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
@@ -349,11 +348,11 @@ class ChallengeMiddlewareTest extends TestCase
             'apk_package_name' => 'foo',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])->assertOk();
@@ -367,8 +366,8 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
@@ -376,11 +375,11 @@ class ChallengeMiddlewareTest extends TestCase
             'apk_package_name' => 'foo',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])->assertOk();
@@ -394,8 +393,8 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(6)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(6)->andReturnFalse();
+        $mock->expects('isDisabled')->times(6)->andReturnFalse();
+        $mock->expects('shouldFake')->times(6)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
@@ -403,11 +402,11 @@ class ChallengeMiddlewareTest extends TestCase
             'apk_package_name' => 'foo',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->twice()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
@@ -428,8 +427,8 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
@@ -437,11 +436,11 @@ class ChallengeMiddlewareTest extends TestCase
             'apk_package_name' => 'foo',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
@@ -462,19 +461,19 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
             'foo'              => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
@@ -499,19 +498,19 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
             'foo'              => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox/remember', [Captchavel::INPUT => 'token'])
@@ -541,19 +540,19 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
             'foo'              => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
@@ -582,19 +581,19 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
             'foo'              => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox/remember', [Captchavel::INPUT => 'token'])
@@ -620,19 +619,19 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
             'foo'              => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->app['router']->post('v2/checkbox/forever', function () {
@@ -672,19 +671,19 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
             'foo'              => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->app['router']->post('v2/checkbox/forever', function () {
@@ -733,19 +732,19 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
             'foo'              => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])
@@ -770,19 +769,19 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
 
         $response = $this->fulfilledResponse([
             'success'          => true,
             'foo'              => 'bar',
         ]);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'checkbox', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'invisible', Captchavel::INPUT)->andReturn($response);
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->once()->with('token', '127.0.0.1', 'android', Captchavel::INPUT)->andReturn($response);
 
         $this->app['router']->post('v2/checkbox/dont-remember', function () {
@@ -825,8 +824,8 @@ class ChallengeMiddlewareTest extends TestCase
             '_recaptcha' => now()->addMinute()->getTimestamp()
         ]);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
         $mock->shouldNotReceive('getChallenge');
 
         $this->post('v2/checkbox', [Captchavel::INPUT => 'token'])->assertOk()->assertSessionHas('_recaptcha');
@@ -846,8 +845,8 @@ class ChallengeMiddlewareTest extends TestCase
             '_recaptcha' => 0
         ]);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
         $mock->shouldNotReceive('getChallenge');
 
         $this->post('v2/checkbox')->assertOk()->assertSessionHas('_recaptcha');
@@ -863,8 +862,8 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
         $mock->shouldNotReceive('getChallenge');
 
         $this->post('v2/checkbox')->assertSessionHasErrors();
@@ -882,8 +881,8 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
         $mock->shouldNotReceive('getChallenge');
 
         $this->post('v2/checkbox')->assertSessionHasErrors()->assertSessionMissing('_recaptcha');
@@ -899,8 +898,8 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->times(3)->andReturnFalse();
-        $mock->shouldReceive('shouldFake')->times(3)->andReturnFalse();
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
         $mock->shouldNotReceive('getChallenge');
 
         $this->app['router']->post('v2/checkbox/dont-remember', function () {

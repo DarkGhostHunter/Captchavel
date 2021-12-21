@@ -14,7 +14,6 @@ use Illuminate\Support\Carbon;
 use Orchestra\Testbench\TestCase;
 use Tests\CreatesFulfilledResponse;
 use Tests\RegistersPackage;
-
 use function config;
 use function trans;
 
@@ -74,10 +73,10 @@ class ScoreMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->shouldReceive('isDisabled')->once()->andReturnFalse();
+        $mock->expects('isDisabled')->once()->andReturnFalse();
 
-        $mock->shouldReceive('shouldFake')->once()->andReturnFalse();
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('shouldFake')->once()->andReturnFalse();
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse([
@@ -140,7 +139,7 @@ class ScoreMiddlewareTest extends TestCase
     {
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'foo' => 'bar'])
@@ -159,7 +158,7 @@ class ScoreMiddlewareTest extends TestCase
     {
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, 'foo', null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'foo' => 'bar'])
@@ -188,7 +187,7 @@ class ScoreMiddlewareTest extends TestCase
     {
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => false, 'score' => 0.7, 'foo' => 'bar'])
@@ -208,7 +207,7 @@ class ScoreMiddlewareTest extends TestCase
 
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'hostname' => 'foo'])
@@ -227,7 +226,7 @@ class ScoreMiddlewareTest extends TestCase
 
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'hostname' => 'bar'])
@@ -246,7 +245,7 @@ class ScoreMiddlewareTest extends TestCase
 
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'hostname' => 'foo'])
@@ -266,7 +265,7 @@ class ScoreMiddlewareTest extends TestCase
 
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => 'foo'])
@@ -285,7 +284,7 @@ class ScoreMiddlewareTest extends TestCase
 
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => 'foo'])
@@ -304,7 +303,7 @@ class ScoreMiddlewareTest extends TestCase
 
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => null])
@@ -322,7 +321,7 @@ class ScoreMiddlewareTest extends TestCase
     {
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null])
@@ -339,7 +338,7 @@ class ScoreMiddlewareTest extends TestCase
     {
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, 'foo')
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null])
@@ -356,7 +355,7 @@ class ScoreMiddlewareTest extends TestCase
     {
         $mock = $this->spy(Captchavel::class);
 
-        $mock->shouldReceive('getChallenge')
+        $mock->expects('getChallenge')
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, 'bar')
             ->andReturn(
                 $this->fulfilledResponse(
@@ -387,10 +386,10 @@ class ScoreMiddlewareTest extends TestCase
 
         $mock = $this->mock(Factory::class);
 
-        $mock->shouldReceive('async')->withNoArgs()->times(4)->andReturnSelf();
-        $mock->shouldReceive('asForm')->withNoArgs()->times(4)->andReturnSelf();
-        $mock->shouldReceive('withOptions')->with(['version' => 2.0])->times(4)->andReturnSelf();
-        $mock->shouldReceive('post')
+        $mock->expects('async')->withNoArgs()->times(4)->andReturnSelf();
+        $mock->expects('asForm')->withNoArgs()->times(4)->andReturnSelf();
+        $mock->expects('withOptions')->with(['version' => 2.0])->times(4)->andReturnSelf();
+        $mock->expects('post')
             ->with(
                 Captchavel::RECAPTCHA_ENDPOINT,
                 [
