@@ -338,7 +338,6 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
-            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null])
@@ -356,7 +355,6 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
-            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, 'foo')
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null])
