@@ -37,9 +37,7 @@ class ScoreMiddlewareTest extends TestCase
 
     public function test_fakes_response_if_authenticated_in_guard(): void
     {
-        $this->app['router']->post('v3/guarded', function (ReCaptchaResponse $response) {
-            return $response;
-        })->middleware(ReCaptcha::score()->except('web')->toString());
+        $this->app['router']->post('v3/guarded', [__CLASS__, 'returnSameResponse'])->middleware(ReCaptcha::score()->except('web')->toString());
 
         $this->actingAs(User::make(), 'web');
 
@@ -164,9 +162,7 @@ class ScoreMiddlewareTest extends TestCase
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'foo' => 'bar'])
             );
 
-        $this->app['router']->post('test', function (ReCaptchaResponse $response) {
-            return $response;
-        })->middleware('recaptcha.score:null,null,foo');
+        $this->app['router']->post('test', [__CLASS__, 'returnSameResponse'])->middleware('recaptcha.score:null,null,foo');
 
         $this->post('test', ['foo' => 'token'])
             ->assertOk()
@@ -343,9 +339,7 @@ class ScoreMiddlewareTest extends TestCase
                 $this->fulfilledResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null])
             );
 
-        $this->app['router']->post('test', function (ReCaptchaResponse $response) {
-            return $response;
-        })->middleware('recaptcha.score:null,null');
+        $this->app['router']->post('test', [__CLASS__, 'returnSameResponse'])->middleware('recaptcha.score:null,null');
 
         $this->post('test', [Captchavel::INPUT => 'token'])->assertOk();
     }
@@ -360,9 +354,7 @@ class ScoreMiddlewareTest extends TestCase
                 $this->fulfilledResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null])
             );
 
-        $this->app['router']->post('test', function (ReCaptchaResponse $response) {
-            return $response;
-        })->middleware('recaptcha.score:null,foo');
+        $this->app['router']->post('test', [__CLASS__, 'returnSameResponse'])->middleware('recaptcha.score:null,foo');
 
         $this->post('test', [Captchavel::INPUT => 'token'])->assertOk();
     }
@@ -382,12 +374,7 @@ class ScoreMiddlewareTest extends TestCase
                 )
             );
 
-        $this->app['router']->post(
-            'test',
-            function (ReCaptchaResponse $response) {
-                return $response;
-            }
-        )->middleware('recaptcha.score:null,bar');
+        $this->app['router']->post('test', [__CLASS__, 'returnSameResponse'])->middleware('recaptcha.score:null,bar');
 
         $this->post('test', [Captchavel::INPUT => 'token'])
             ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.match'))
