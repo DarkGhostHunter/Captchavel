@@ -208,6 +208,7 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
+            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'hostname' => 'foo'])
@@ -227,6 +228,7 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
+            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'hostname' => 'bar'])
@@ -246,6 +248,7 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
+            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'hostname' => 'foo'])
@@ -266,6 +269,7 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
+            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => 'foo'])
@@ -285,6 +289,7 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
+            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => 'foo'])
@@ -304,6 +309,7 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
+            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'score' => 0.7, 'apk_package_name' => null])
@@ -322,6 +328,7 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
+            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, null)
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null])
@@ -339,6 +346,7 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
+            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, 'foo')
             ->andReturn(
                 $this->fulfilledResponse(['success' => true, 'action' => 'foo', 'apk_package_name' => null])
@@ -356,6 +364,7 @@ class ScoreMiddlewareTest extends TestCase
         $mock = $this->spy(Captchavel::class);
 
         $mock->expects('getChallenge')
+            ->twice()
             ->with('token', '127.0.0.1', Captchavel::SCORE, Captchavel::INPUT, 'bar')
             ->andReturn(
                 $this->fulfilledResponse(
