@@ -4,7 +4,6 @@ namespace DarkGhostHunter\Captchavel\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-
 use function auth;
 use function back;
 use function trans;
@@ -54,7 +53,7 @@ trait VerificationHelpers
      */
     protected function ensureChallengeIsPresent(Request $request, string $input): void
     {
-        if ($request->missing($input)) {
+        if ($request->isNotFilled($input)) {
             throw ValidationException::withMessages([
                 $input => trans('captchavel::validation.missing')
             ])->redirectTo(back()->getTargetUrl());
