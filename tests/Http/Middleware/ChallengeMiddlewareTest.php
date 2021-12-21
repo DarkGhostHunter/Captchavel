@@ -179,6 +179,42 @@ class ChallengeMiddlewareTest extends TestCase
         $this->postJson('v2/android/input_bar')->assertJsonValidationErrors('bar');
     }
 
+    public function test_exception_when_token_null(): void
+    {
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->expects('isDisabled')->times(12)->andReturnFalse();
+        $mock->expects('shouldFake')->times(12)->andReturnFalse();
+
+        $mock->allows('getChallenge')->never();
+
+        $this->post('v2/checkbox', [Captchavel::INPUT => null])
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.missing'))
+            ->assertRedirect('/');
+        $this->postJson('v2/checkbox')->assertJsonValidationErrors(Captchavel::INPUT);
+        $this->post('v2/invisible', [Captchavel::INPUT => null])
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.missing'))
+            ->assertRedirect('/');
+        $this->postJson('v2/invisible')->assertJsonValidationErrors(Captchavel::INPUT);
+        $this->post('v2/android', [Captchavel::INPUT => null])
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.missing'))
+            ->assertRedirect('/');
+        $this->postJson('v2/android', [Captchavel::INPUT => null])->assertJsonValidationErrors(Captchavel::INPUT);
+
+        $this->post('v2/checkbox/input_bar', ['bar' => null])
+            ->assertSessionHasErrors('bar', trans('captchavel::validation.missing'))
+            ->assertRedirect('/');
+        $this->postJson('v2/checkbox/input_bar')->assertJsonValidationErrors('bar');
+        $this->post('v2/invisible/input_bar', ['bar' => null])
+            ->assertSessionHasErrors('bar', trans('captchavel::validation.missing'))
+            ->assertRedirect('/');
+        $this->postJson('v2/invisible/input_bar')->assertJsonValidationErrors('bar');
+        $this->post('v2/android/input_bar', ['bar' => null])
+            ->assertSessionHasErrors('bar', trans('captchavel::validation.missing'))
+            ->assertRedirect('/');
+        $this->postJson('v2/android/input_bar', ['bar' => null])->assertJsonValidationErrors('bar');
+    }
+
     public function test_exception_when_response_failed(): void
     {
         $mock = $this->mock(Captchavel::class);
