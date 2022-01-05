@@ -101,7 +101,18 @@ class ReCaptcha implements Stringable
      */
     public function except(string ...$guards): static
     {
-        $this->guards = $guards;
+        return $this->forGuests(...$guards);
+    }
+
+    /**
+     * Show the challenge on non-authenticated users.
+     *
+     * @param  string ...$guards
+     * @return $this
+     */
+    public function forGuests(string ...$guards): static
+    {
+        $this->guards = $guards ?: ['null'];
 
         return $this;
     }
@@ -209,8 +220,10 @@ class ReCaptcha implements Stringable
     {
         $declaration = $this->getBaseParameters()
             ->reverse()
-            ->skipUntil(static function (string $parameter): bool {
-                return $parameter !== 'null';
+            ->unless($this->guards, static function (Collection $parameters): Collection {
+                return $parameters->skipUntil(static function (string $parameter): bool {
+                    return $parameter !== 'null';
+                });
             })
             ->reverse()
             ->implode(',');

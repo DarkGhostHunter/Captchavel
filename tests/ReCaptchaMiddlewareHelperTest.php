@@ -144,4 +144,12 @@ class ReCaptchaMiddlewareHelperTest extends TestCase
         static::assertEquals('recaptcha.score:0.7', ReCaptcha::score(0.7)->toString());
         static::assertEquals('recaptcha.score:0.7', ReCaptcha::score(0.7)->__toString());
     }
+
+    public function tests_uses_all_guards_as_exception(): void
+    {
+        static::assertEquals('recaptcha:checkbox,null,null,null', ReCaptcha::checkbox()->forGuests()->toString());
+        static::assertEquals('recaptcha:invisible,null,null,null', ReCaptcha::invisible()->forGuests()->toString());
+        static::assertEquals('recaptcha:android,null,null,null', ReCaptcha::android()->forGuests()->toString());
+        static::assertEquals('recaptcha.score:0.5,null,null,null', ReCaptcha::score()->forGuests()->toString());
+    }
 }
