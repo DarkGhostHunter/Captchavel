@@ -220,8 +220,10 @@ class ReCaptcha implements Stringable
     {
         $declaration = $this->getBaseParameters()
             ->reverse()
-            ->skipUntil(static function (string $parameter): bool {
-                return $parameter !== 'null';
+            ->unless($this->guards, static function (Collection $parameters): Collection {
+                return $parameters->skipUntil(static function (string $parameter): bool {
+                    return $parameter !== 'null';
+                });
             })
             ->reverse()
             ->implode(',');
