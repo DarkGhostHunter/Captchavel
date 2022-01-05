@@ -76,7 +76,7 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock->allows('getChallenge')->never();
 
-        $this->actingAs(new GenericUser, 'web');
+        $this->actingAs(new GenericUser([]), 'web');
 
         $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
             ->middleware('recaptcha:checkbox,null,null,api,web');
@@ -96,7 +96,7 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock->allows('getChallenge')->never();
 
-        $this->actingAs(new GenericUser, 'api');
+        $this->actingAs(new GenericUser([]), 'api');
 
         $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
             ->middleware('recaptcha:checkbox,null,null,null');
@@ -118,7 +118,7 @@ class ChallengeMiddlewareTest extends TestCase
         $mock->expects('shouldFake')->times(3)->andReturnFalse();
         $mock->allows('getChallenge')->never();
 
-        $this->actingAs(new GenericUser, 'api');
+        $this->actingAs(new GenericUser([]), 'api');
 
         $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
             ->middleware('recaptcha:checkbox,null,null,web');
