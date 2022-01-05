@@ -70,7 +70,7 @@ class ChallengeMiddlewareTest extends TestCase
         $this->post('v2/android')->assertOk();
     }
 
-    public function test_bypasses_if_guest(): void
+    public function test_bypasses_if_authenticated_on_default_guard(): void
     {
         $mock = $this->mock(Captchavel::class);
 
@@ -78,39 +78,12 @@ class ChallengeMiddlewareTest extends TestCase
         $mock->expects('shouldFake')->times(3)->andReturnFalse();
         $mock->allows('getChallenge')->never();
 
-        $this->actingAs(new GenericUser([]), 'web');
-
-        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha:checkbox,null,null,api,web');
-        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha:invisible,null,null,api,web');
-        $this->app['router']->post('android/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha:android,null,null,api,web');
-
-        $this->post('/checkbox/auth')->assertOk();
-        $this->post('/invisible/auth')->assertOk();
-        $this->post('/android/auth')->assertOk();
-    }
-
-    public function test_bypasses_if_any_guest(): void
-    {
-        config()->set('auth.guards.api', [
-            'driver' => 'session',
-            'provider' => 'users',
-        ]);
-
-        $mock = $this->mock(Captchavel::class);
-
-        $mock->expects('isDisabled')->times(3)->andReturnFalse();
-        $mock->expects('shouldFake')->times(3)->andReturnFalse();
-        $mock->allows('getChallenge')->never();
-
-        $this->actingAs(new GenericUser([]), 'api');
+        $this->actingAs(new GenericUser([]));
 
         $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
             ->middleware('recaptcha:checkbox,null,null,null');
         $this->app['router']->post('invisible/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha:invisible,null,null,null');
+            ->middleware('recaptcha:invisible,null,null,nul');
         $this->app['router']->post('android/auth', [__CLASS__, 'returnSameResponse'])
             ->middleware('recaptcha:android,null,null,null');
 
@@ -119,7 +92,7 @@ class ChallengeMiddlewareTest extends TestCase
         $this->post('/android/auth')->assertOk();
     }
 
-    public function test_error_if_is_guest_on_set_guard(): void
+    public function test_bypasses_if_authenticated_on_one_of_given_guard(): void
     {
         config()->set('auth.guards.api', [
             'driver' => 'session',
@@ -135,11 +108,66 @@ class ChallengeMiddlewareTest extends TestCase
         $this->actingAs(new GenericUser([]), 'api');
 
         $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha:checkbox,null,null,web');
+            ->middleware('recaptcha:checkbox,null,null,web,api');
         $this->app['router']->post('invisible/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha:invisible,null,null,web');
+            ->middleware('recaptcha:invisible,null,null,web,api');
         $this->app['router']->post('android/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha:android,null,null,web');
+            ->middleware('recaptcha:android,null,null,web,api');
+
+        $this->post('/checkbox/auth')->assertOk();
+        $this->post('/invisible/auth')->assertOk();
+        $this->post('/android/auth')->assertOk();
+    }
+
+    public function test_error_if_guest(): void
+    {
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
+        $mock->allows('getChallenge')->never();
+
+        $this->actingAs(new GenericUser([]));
+
+        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
+            ->middleware('recaptcha:checkbox,null,null,null');
+        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnSameResponse'])
+            ->middleware('recaptcha:invisible,null,null,null');
+        $this->app['router']->post('android/auth', [__CLASS__, 'returnSameResponse'])
+            ->middleware('recaptcha:android,null,null,null');
+
+        $this->post('/checkbox/auth')
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.missing'))
+            ->assertRedirect('/');
+        $this->post('/invisible/auth')
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.missing'))
+            ->assertRedirect('/');
+        $this->post('/android/auth')
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.missing'))
+            ->assertRedirect('/');
+    }
+
+    public function test_error_if_guest_on_given_guard(): void
+    {
+        config()->set('auth.guards.api', [
+            'driver' => 'session',
+            'provider' => 'users',
+        ]);
+
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
+        $mock->allows('getChallenge')->never();
+
+        $this->actingAs(new GenericUser([]));
+
+        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
+            ->middleware('recaptcha:checkbox,null,null,api');
+        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnSameResponse'])
+            ->middleware('recaptcha:invisible,null,null,api');
+        $this->app['router']->post('android/auth', [__CLASS__, 'returnSameResponse'])
+            ->middleware('recaptcha:android,null,null,api');
 
         $this->post('/checkbox/auth')
             ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.missing'))

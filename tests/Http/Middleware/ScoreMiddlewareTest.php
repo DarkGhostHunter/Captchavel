@@ -170,40 +170,23 @@ class ScoreMiddlewareTest extends TestCase
             ->assertExactJson(['success' => true, 'score' => 0.7, 'foo' => 'bar']);
     }
 
-    public function test_fakes_human_score_if_authenticated(): void
+    public function test_fakes_human_score_if_authenticated_in_default_guard(): void
     {
         $mock = $this->mock(Captchavel::class);
 
+        $mock->expects('isDisabled')->once()->andReturnFalse();
+        $mock->expects('shouldFake')->once()->andReturnFalse();
         $mock->allows('getChallenge')->never();
 
-        $this->actingAs(new GenericUser([]), 'web');
+        $this->actingAs(new GenericUser([]));
 
         $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha.score:0.5,null,null,null,web');
+            ->middleware('recaptcha.score:0.5,null,null,null,null');
 
         $this->post('/score/auth')->assertOk();
     }
 
-    public function test_fakes_human_score_if_authenticated_in_any_guard(): void
-    {
-        config()->set('auth.guards.api', [
-            'driver' => 'session',
-            'provider' => 'users',
-        ]);
-
-        $mock = $this->mock(Captchavel::class);
-
-        $mock->allows('getChallenge')->never();
-
-        $this->actingAs(new GenericUser([]), 'api');
-
-        $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha.score:0.5,null,null,null,web');
-
-        $this->post('/score/auth')->assertOk();
-    }
-
-    public function test_error_if_is_guest_on_set_guard(): void
+    public function test_fakes_human_score_if_authenticated_in_one_of_given_guards(): void
     {
         config()->set('auth.guards.api', [
             'driver' => 'session',
@@ -219,7 +202,28 @@ class ScoreMiddlewareTest extends TestCase
         $this->actingAs(new GenericUser([]), 'api');
 
         $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha.score:0.5,null,null,null,web');
+            ->middleware('recaptcha.score:0.5,null,null,null,web,api');
+
+        $this->post('/score/auth')->assertOk();
+    }
+
+    public function test_error_if_is_guest(): void
+    {
+        config()->set('auth.guards.api', [
+            'driver' => 'session',
+            'provider' => 'users',
+        ]);
+
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->expects('isDisabled')->once()->andReturnFalse();
+        $mock->expects('shouldFake')->once()->andReturnFalse();
+        $mock->allows('getChallenge')->never();
+
+        $this->actingAs(new GenericUser([]));
+
+        $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
+            ->middleware('recaptcha.score:0.5,null,null,null,api');
 
         $this->post('/score/auth')
             ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.missing'))
