@@ -101,9 +101,20 @@ class ReCaptcha implements Stringable
      */
     public function except(string ...$guards): static
     {
-        $this->guards = $guards;
+        $this->guards = $guards ?: ['null'];
 
         return $this;
+    }
+
+    /**
+     * Bypass the check when the user is authenticated on any guard.
+     *
+     * @param  string ...$guards
+     * @return $this
+     */
+    public function onlyGuests(string ...$guards): static
+    {
+        return $this->except(...$guards);
     }
 
     /**

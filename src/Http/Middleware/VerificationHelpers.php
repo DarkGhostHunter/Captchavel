@@ -23,6 +23,10 @@ trait VerificationHelpers
     {
         $auth = auth();
 
+        if ($guard === ['null']) {
+            $guard = [null];
+        }
+
         foreach ($guards as $guard) {
             if ($auth->guard($guard)->check()) {
                 return false;
