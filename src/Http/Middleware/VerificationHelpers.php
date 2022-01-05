@@ -23,8 +23,8 @@ trait VerificationHelpers
     {
         $auth = auth();
 
-        if ($guard === ['null']) {
-            $guard = [null];
+        if ($guards === ['null']) {
+            $guards = [null];
         }
 
         foreach ($guards as $guard) {
