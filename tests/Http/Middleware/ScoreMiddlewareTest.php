@@ -170,13 +170,13 @@ class ScoreMiddlewareTest extends TestCase
             ->assertExactJson(['success' => true, 'score' => 0.7, 'foo' => 'bar']);
     }
 
-    public function test_bypasses_if_authenticated(): void
+    public function test_fakes_human_score_if_authenticated(): void
     {
         $mock = $this->mock(Captchavel::class);
 
         $mock->allows('getChallenge')->never();
 
-        $this->actingAs(new GenericUser, 'web');
+        $this->actingAs(new GenericUser([]), 'web');
 
         $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
             ->middleware('recaptcha.score:0.5,null,null,null,web');
@@ -184,13 +184,13 @@ class ScoreMiddlewareTest extends TestCase
         $this->post('/score/auth')->assertOk();
     }
 
-    public function test_bypasses_if_authenticated_in_any_guard(): void
+    public function test_fakes_human_score_if_authenticated_in_any_guard(): void
     {
         $mock = $this->mock(Captchavel::class);
 
         $mock->allows('getChallenge')->never();
 
-        $this->actingAs(new GenericUser, 'api');
+        $this->actingAs(new GenericUser([]), 'api');
 
         $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
             ->middleware('recaptcha.score:0.5,null,null,null,web');
@@ -206,7 +206,7 @@ class ScoreMiddlewareTest extends TestCase
         $mock->expects('shouldFake')->once()->andReturnFalse();
         $mock->allows('getChallenge')->never();
 
-        $this->actingAs(new GenericUser, 'api');
+        $this->actingAs(new GenericUser([]), 'api');
 
         $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
             ->middleware('recaptcha.score:0.5,null,null,null,web');
