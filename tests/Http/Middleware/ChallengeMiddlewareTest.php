@@ -92,6 +92,11 @@ class ChallengeMiddlewareTest extends TestCase
 
     public function test_bypasses_if_any_guest(): void
     {
+        config()->set('auth.guards.api', [
+            'driver' => 'session',
+            'provider' => 'users',
+        ]);
+
         $mock = $this->mock(Captchavel::class);
 
         $mock->allows('getChallenge')->never();
@@ -112,6 +117,11 @@ class ChallengeMiddlewareTest extends TestCase
 
     public function test_error_if_is_guest_on_set_guard(): void
     {
+        config()->set('auth.guards.api', [
+            'driver' => 'session',
+            'provider' => 'users',
+        ]);
+
         $mock = $this->mock(Captchavel::class);
 
         $mock->expects('isDisabled')->times(3)->andReturnFalse();

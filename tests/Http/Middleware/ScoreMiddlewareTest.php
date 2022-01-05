@@ -186,6 +186,11 @@ class ScoreMiddlewareTest extends TestCase
 
     public function test_fakes_human_score_if_authenticated_in_any_guard(): void
     {
+        config()->set('auth.guards.api', [
+            'driver' => 'session',
+            'provider' => 'users',
+        ]);
+
         $mock = $this->mock(Captchavel::class);
 
         $mock->allows('getChallenge')->never();
@@ -200,6 +205,11 @@ class ScoreMiddlewareTest extends TestCase
 
     public function test_error_if_is_guest_on_set_guard(): void
     {
+        config()->set('auth.guards.api', [
+            'driver' => 'session',
+            'provider' => 'users',
+        ]);
+
         $mock = $this->mock(Captchavel::class);
 
         $mock->expects('isDisabled')->once()->andReturnFalse();
