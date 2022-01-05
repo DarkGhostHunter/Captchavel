@@ -80,11 +80,11 @@ class ChallengeMiddlewareTest extends TestCase
 
         $this->actingAs(new GenericUser([]));
 
-        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:checkbox,null,null,null');
-        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:invisible,null,null,nul');
-        $this->app['router']->post('android/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('android/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:android,null,null,null');
 
         $this->post('/checkbox/auth')->assertOk();
@@ -107,11 +107,11 @@ class ChallengeMiddlewareTest extends TestCase
 
         $this->actingAs(new GenericUser([]), 'api');
 
-        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:checkbox,null,null,web,api');
-        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:invisible,null,null,web,api');
-        $this->app['router']->post('android/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('android/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:android,null,null,web,api');
 
         $this->post('/checkbox/auth')->assertOk();
@@ -129,11 +129,11 @@ class ChallengeMiddlewareTest extends TestCase
 
         $this->actingAs(new GenericUser([]));
 
-        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:checkbox,null,null,null');
-        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:invisible,null,null,null');
-        $this->app['router']->post('android/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('android/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:android,null,null,null');
 
         $this->post('/checkbox/auth')
@@ -162,11 +162,11 @@ class ChallengeMiddlewareTest extends TestCase
 
         $this->actingAs(new GenericUser([]));
 
-        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:checkbox,null,null,api');
-        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('invisible/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:invisible,null,null,api');
-        $this->app['router']->post('android/auth', [__CLASS__, 'returnSameResponse'])
+        $this->app['router']->post('android/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:android,null,null,api');
 
         $this->post('/checkbox/auth')
