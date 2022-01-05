@@ -74,6 +74,8 @@ class ChallengeMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
         $mock->allows('getChallenge')->never();
 
         $this->actingAs(new GenericUser([]), 'web');
@@ -99,6 +101,8 @@ class ChallengeMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
+        $mock->expects('isDisabled')->times(3)->andReturnFalse();
+        $mock->expects('shouldFake')->times(3)->andReturnFalse();
         $mock->allows('getChallenge')->never();
 
         $this->actingAs(new GenericUser([]), 'api');
