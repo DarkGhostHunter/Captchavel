@@ -83,7 +83,7 @@ class ChallengeMiddlewareTest extends TestCase
         $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:checkbox,null,null,null');
         $this->app['router']->post('invisible/auth', [__CLASS__, 'returnResponseIfExists'])
-            ->middleware('recaptcha:invisible,null,null,nul');
+            ->middleware('recaptcha:invisible,null,null,null');
         $this->app['router']->post('android/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:android,null,null,null');
 
@@ -126,8 +126,6 @@ class ChallengeMiddlewareTest extends TestCase
         $mock->expects('isDisabled')->times(3)->andReturnFalse();
         $mock->expects('shouldFake')->times(3)->andReturnFalse();
         $mock->allows('getChallenge')->never();
-
-        $this->actingAs(new GenericUser([]));
 
         $this->app['router']->post('checkbox/auth', [__CLASS__, 'returnResponseIfExists'])
             ->middleware('recaptcha:checkbox,null,null,null');

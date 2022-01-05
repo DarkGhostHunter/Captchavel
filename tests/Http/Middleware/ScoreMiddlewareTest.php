@@ -181,7 +181,7 @@ class ScoreMiddlewareTest extends TestCase
         $this->actingAs(new GenericUser([]));
 
         $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha.score:0.5,null,null,null,null');
+            ->middleware('recaptcha.score:0.5,null,null,null');
 
         $this->post('/score/auth')->assertOk();
     }
@@ -202,7 +202,7 @@ class ScoreMiddlewareTest extends TestCase
         $this->actingAs(new GenericUser([]), 'api');
 
         $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha.score:0.5,null,null,null,web,api');
+            ->middleware('recaptcha.score:0.5,null,null,web,api');
 
         $this->post('/score/auth')->assertOk();
     }
@@ -223,7 +223,7 @@ class ScoreMiddlewareTest extends TestCase
         $this->actingAs(new GenericUser([]));
 
         $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
-            ->middleware('recaptcha.score:0.5,null,null,null,api');
+            ->middleware('recaptcha.score:0.5,null,null,api');
 
         $this->post('/score/auth')
             ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.missing'))
