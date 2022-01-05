@@ -174,8 +174,6 @@ class ScoreMiddlewareTest extends TestCase
     {
         $mock = $this->mock(Captchavel::class);
 
-        $mock->expects('isDisabled')->once()->andReturnFalse();
-        $mock->expects('shouldFake')->once()->andReturnFalse();
         $mock->allows('getChallenge')->never();
 
         $this->actingAs(new GenericUser([]));
@@ -195,8 +193,6 @@ class ScoreMiddlewareTest extends TestCase
 
         $mock = $this->mock(Captchavel::class);
 
-        $mock->expects('isDisabled')->once()->andReturnFalse();
-        $mock->expects('shouldFake')->once()->andReturnFalse();
         $mock->allows('getChallenge')->never();
 
         $this->actingAs(new GenericUser([]), 'api');
