@@ -7,6 +7,7 @@ use DarkGhostHunter\Captchavel\Captchavel;
 use DarkGhostHunter\Captchavel\CaptchavelFake;
 use DarkGhostHunter\Captchavel\Http\ReCaptchaResponse;
 use DarkGhostHunter\Captchavel\ReCaptcha;
+use Illuminate\Auth\GenericUser;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Request;
@@ -167,6 +168,62 @@ class ScoreMiddlewareTest extends TestCase
         $this->post('test', ['foo' => 'token'])
             ->assertOk()
             ->assertExactJson(['success' => true, 'score' => 0.7, 'foo' => 'bar']);
+    }
+
+    public function test_fakes_human_score_if_authenticated_in_default_guard(): void
+    {
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->allows('getChallenge')->never();
+
+        $this->actingAs(new GenericUser([]));
+
+        $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
+            ->middleware('recaptcha.score:0.5,null,null,null');
+
+        $this->post('/score/auth')->assertOk();
+    }
+
+    public function test_fakes_human_score_if_authenticated_in_one_of_given_guards(): void
+    {
+        config()->set('auth.guards.api', [
+            'driver' => 'session',
+            'provider' => 'users',
+        ]);
+
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->allows('getChallenge')->never();
+
+        $this->actingAs(new GenericUser([]), 'api');
+
+        $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
+            ->middleware('recaptcha.score:0.5,null,null,web,api');
+
+        $this->post('/score/auth')->assertOk();
+    }
+
+    public function test_error_if_is_guest(): void
+    {
+        config()->set('auth.guards.api', [
+            'driver' => 'session',
+            'provider' => 'users',
+        ]);
+
+        $mock = $this->mock(Captchavel::class);
+
+        $mock->expects('isDisabled')->once()->andReturnFalse();
+        $mock->expects('shouldFake')->once()->andReturnFalse();
+        $mock->allows('getChallenge')->never();
+
+        $this->actingAs(new GenericUser([]));
+
+        $this->app['router']->post('score/auth', [__CLASS__, 'returnSameResponse'])
+            ->middleware('recaptcha.score:0.5,null,null,api');
+
+        $this->post('/score/auth')
+            ->assertSessionHasErrors(Captchavel::INPUT, trans('captchavel::validation.missing'))
+            ->assertRedirect('/');
     }
 
     public function test_exception_when_token_absent(): void

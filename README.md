@@ -179,7 +179,9 @@ Route::post('comment', [CommentController::class, 'create'])
 
 #### Bypassing on authenticated users
 
-Sometimes you may want to bypass reCAPTCHA checks when there is an authenticated user, or automatically receive it as a "human" on score-driven challenges. While in your frontend you can programmatically disable reCAPTCHA when the user is authenticated, on the routes you can specify the guards to bypass using `except()`.
+Sometimes you may want to bypass reCAPTCHA checks when there is an authenticated user, or automatically receive it as a "human" on score-driven challenges, specially on recurrent actions or when the user already completes a challenge (like on logins).
+
+To exclude authenticated user you can use `forGuests()`, and specify the guards if necessary.
 
 ```php
 use App\Http\Controllers\CommentController;
@@ -187,11 +189,29 @@ use App\Http\Controllers\MessageController;
 use DarkGhostHunter\Captchavel\ReCaptcha;
 use Illuminate\Support\Facades\Route
 
+// Don't challenge users authenticated on the default (web) guard.
 Route::post('message/send', [MessageController::class, 'send'])
-     ->middleware(ReCaptcha::invisible()->except('user'));
+     ->middleware(ReCaptcha::invisible()->forGuests());
 
+// Don't challenge users authenticated on the "admin" and "moderator" guards.
 Route::post('comment/store', [CommentController::class, 'store'])
-     ->middleware(ReCaptcha::score(0.7)->action('comment.store')->except('admin', 'moderator'));
+     ->middleware(ReCaptcha::score(0.7)->action('comment.store')->forGuests('admin', 'moderator'));
+```
+
+Then, in your blade files, you can easily skip the challenge with the `@guest` or `@auth` directives.
+
+```blade
+<form id="comment" method="post">
+    <textarea name="body"></textarea>
+
+    @auth
+        <button type="submit">Post comment</button>
+    @else
+        <button class="g-recaptcha" data-sitekey="{{ captchavel('invisible') }}" data-callback="onSubmit">
+            Post comment
+        </button>        
+    @endauth
+</form>
 ```
 
 #### Faking reCAPTCHA scores 
@@ -209,10 +229,14 @@ From there, you can fake a robot response by filling the `is_robot` input in you
 ```blade
 <form id="comment" method="post">
     <textarea name="body"></textarea>
+
     @env('local', 'testing')
         <input type="checkbox" name="is_robot" checked>
     @endenv
-    <button class="g-recaptcha" data-sitekey="{{ captchavel('invisible') }}" data-callback='onSubmit'>Login</button>
+
+    <button class="g-recaptcha" data-sitekey="{{ captchavel('invisible') }}" data-callback='onSubmit'>
+        Post comment
+    </button>
 </form>
 ```
 
@@ -224,11 +248,12 @@ You can use the `captchavel()` helper to output the site key depending on the ch
 
 ```blade
 <form id='login' method="POST">
-  <input type="email" name="email">
-  <input type="password" name="password">
-  
-  <button class="g-recaptcha" data-sitekey="{{ captchavel('invisible') }}" data-callback='onSubmit'>Login</button>
-  <br/>
+    <input type="email" name="email">
+    <input type="password" name="password">
+
+    <button class="g-recaptcha" data-sitekey="{{ captchavel('invisible') }}" data-callback='onSubmit'>
+        Login
+    </button>
 </form>
 ```
 
