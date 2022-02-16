@@ -1,4 +1,4 @@
-# Package superseeded by [Laragear/ReCaptcha](https://github.com/Laragear/ReCaptcha)
+# Package superseded by [Laragear/ReCaptcha](https://github.com/Laragear/ReCaptcha)
 
 ---
 
