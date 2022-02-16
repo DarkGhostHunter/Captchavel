@@ -1,6 +1,6 @@
 # Package superseeded by [Laragear/ReCaptcha](https://github.com/Laragear/ReCaptcha)
 
-The new versions is very similar to Captchavel, plus has some great additions and performance optimizations.
+The new version is very similar to Captchavel, plus has some great additions and performance optimizations.
 
 ---
 
