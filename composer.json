@@ -16,6 +16,7 @@
             "role": "Developer"
         }
     ],
+    "abandoned": "laragear/recaptcha",
     "require": {
         "php": "^8.0",
         "ext-json": "*",
